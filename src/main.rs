@@ -5,12 +5,13 @@ use crossterm::{
     style::{Print, ResetColor, SetForegroundColor},
 };
 
-use crate::terminal::Terminal;
+use crate::{error::AppError, terminal::Terminal};
 
+mod error;
 mod terminal;
 
-fn main() {
-    let mut term = Terminal::new().unwrap();
+fn main() -> error::Result<()> {
+    let mut term = Terminal::new()?;
 
     queue!(
         term.stdout(),
@@ -18,14 +19,15 @@ fn main() {
         Print("Grr \n"),
         ResetColor,
         Print("Small grr"),
-    )
-    .unwrap();
+    )?;
 
-    term.stdout().flush().unwrap();
+    term.stdout().flush()?;
 
     std::thread::sleep(std::time::Duration::from_secs(3));
 
     drop(term);
 
     println!("Hello, world!");
+
+    Ok(())
 }
