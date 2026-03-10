@@ -3,7 +3,7 @@ use std::io::{self, Stdout, stdout};
 use crossterm::{
     cursor::{self, SetCursorStyle},
     execute,
-    terminal::{self, EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode},
+    terminal::{self, EnterAlternateScreen, LeaveAlternateScreen},
 };
 
 // Terminal Wrapper: Enter raw mode on creation and restore terminal on drop.
