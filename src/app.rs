@@ -5,14 +5,24 @@ use crossterm::{
     style::{Print, ResetColor, SetForegroundColor},
 };
 
-use crate::error::Result;
 use crate::terminal::Terminal;
+use crate::{core::word_list::WordPool, error::Result};
 pub struct App {
     terminal: Terminal,
 }
 
 impl App {
     pub fn new() -> Result<Self> {
+        let mut wordlist = WordPool::new("english")?;
+
+        let word = wordlist.next_word();
+
+        println!("{}", word);
+
+        let tenwords = wordlist.gen_words(10);
+
+        println!("{:?}", tenwords);
+
         let mut terminal = Terminal::new()?;
 
         queue!(

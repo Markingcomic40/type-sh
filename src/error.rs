@@ -8,6 +8,15 @@ use thiserror::Error;
 pub enum AppError {
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
+
+    #[error("Could not load word set '{name}'")]
+    WordSetLoad {
+        name: String,
+        source: std::io::Error,
+    },
+
+    #[error("Word set '{0}' is empty")]
+    EmptyWordSet(String),
 }
 
 pub type Result<T> = std::result::Result<T, AppError>;
