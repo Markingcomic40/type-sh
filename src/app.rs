@@ -6,9 +6,11 @@ use crossterm::{
 };
 
 use crate::terminal::Terminal;
+use crate::ui::renderer::Renderer;
 use crate::{core::word_list::WordPool, error::Result};
 pub struct App {
     terminal: Terminal,
+    renderer: Renderer,
 }
 
 impl App {
@@ -25,19 +27,11 @@ impl App {
 
         let mut terminal = Terminal::new()?;
 
-        queue!(
-            terminal.stdout(),
-            SetForegroundColor(crossterm::style::Color::Cyan),
-            Print("Grr \n"),
-            ResetColor,
-            Print("Small grr"),
-        )?;
+        let renderer = Renderer::new();
 
-        terminal.stdout().flush()?;
+        renderer.render(terminal.stdout())?;
 
-        std::thread::sleep(std::time::Duration::from_secs(3));
-
-        Ok(Self { terminal })
+        Ok(Self { terminal, renderer })
     }
 
     pub fn run(&mut self) -> Result<()> {

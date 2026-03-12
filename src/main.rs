@@ -2,6 +2,7 @@ mod app;
 mod core;
 mod error;
 mod terminal;
+mod ui;
 
 use app::App;
 
