@@ -24,6 +24,10 @@ impl Terminal {
     pub fn stdout(&mut self) -> &mut Stdout {
         &mut self.stdout
     }
+
+    pub fn size() -> (u16, u16) {
+        terminal::size().unwrap_or((80, 24))
+    }
 }
 
 impl Drop for Terminal {

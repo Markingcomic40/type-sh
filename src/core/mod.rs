@@ -1,4 +1,4 @@
 pub mod config;
 pub mod game;
-
-pub mod word_list;
+pub mod typing_test;
+pub mod word_pool;
