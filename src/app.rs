@@ -8,7 +8,7 @@ use crossterm::{
 
 use crate::ui::renderer::Renderer;
 use crate::{core::game::Game, terminal::Terminal};
-use crate::{core::word_pool::WordPool, error::Result};
+use crate::{core::word_pool::WordList, error::Result};
 pub struct App {
     terminal: Terminal,
     renderer: Renderer,
@@ -56,6 +56,8 @@ impl App {
                     _ => {}
                 }
             }
+
+            self.game.tick();
 
             if self.game.should_quit() {
                 break;

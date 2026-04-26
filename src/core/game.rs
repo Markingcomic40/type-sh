@@ -2,6 +2,7 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 use crate::core::config::TestConfig;
 use crate::error::Result;
+use crate::ui::test_view::ViewportConfig;
 use crate::{core::typing_test::TypingTest, ui::test_view::TestView};
 
 pub enum GameState {
@@ -31,7 +32,7 @@ impl Game {
             }
         };
 
-        let view = TestView::new();
+        let view: TestView = TestView::new(ViewportConfig::new(terminal_width, 3));
 
         Ok(Self {
             state: GameState::Running { test, view },
@@ -42,6 +43,14 @@ impl Game {
 
     pub fn should_quit(&self) -> bool {
         self.should_quit
+    }
+
+    pub fn tick(&mut self) {
+        if let GameState::Running { test, view } = &mut self.state {
+            if view.update_layout(test) {
+                test.append_words();
+            }
+        }
     }
 
     pub fn state(&self) -> &GameState {

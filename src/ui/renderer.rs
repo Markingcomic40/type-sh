@@ -3,12 +3,12 @@ use crossterm::{
     style::{Print, ResetColor, SetForegroundColor},
     terminal,
 };
-use std::io::{Stdout, Write};
+use std::io::{Cursor, Stdout, Write};
 
 use crate::{
     core::{game::GameState, typing_test::TypingTest},
     error::Result,
-    ui::test_view::TestView,
+    ui::test_view::{TestView, WordLayout},
 };
 
 pub struct Renderer {}
@@ -56,17 +56,24 @@ impl Renderer {
             terminal::Clear(terminal::ClearType::All),
         )?;
 
-        let layout = view.layouts();
+        let layouts = view.layouts();
+        eprintln!("{layouts:#?}");
 
-        queue!(
-            stdout,
-            cursor::MoveTo(layout[0].x_position as u16, layout[0].line_number as u16),
-            SetForegroundColor(crossterm::style::Color::Cyan),
-            Print(&test.words()[layout[0].word_index].target),
-            ResetColor,
-            cursor::MoveTo(0, 1),
-            Print("Small grr"),
-        )?;
+        for &WordLayout {
+            word_index,
+            line_number,
+            x_position,
+        } in layouts.iter()
+        {
+            queue!(
+                stdout,
+                cursor::MoveTo(x_position as u16, line_number as u16),
+                SetForegroundColor(crossterm::style::Color::Cyan),
+                Print(&test.words()[word_index].target),
+                ResetColor,
+            )?;
+            // queue!(stdout);
+        }
 
         stdout.flush()?;
 

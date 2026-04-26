@@ -39,12 +39,12 @@ impl WordSet {
     }
 }
 
-pub struct WordPool {
+pub struct WordList {
     source_pool: Vec<String>,
     rng: rand::rngs::ThreadRng,
 }
 
-impl WordPool {
+impl WordList {
     pub fn new(name: &str) -> Result<Self> {
         let source_pool = WordSet::load(name)?;
 
