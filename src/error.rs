@@ -17,6 +17,12 @@ pub enum AppError {
 
     #[error("Word set '{0}' is empty")]
     EmptyWordSet(String),
+
+    #[error("Failed to load theme '{name}': {source}")]
+    ThemeLoad {
+        name: String,
+        source: Box<dyn std::error::Error + Send + Sync>,
+    },
 }
 
 pub type Result<T> = std::result::Result<T, AppError>;

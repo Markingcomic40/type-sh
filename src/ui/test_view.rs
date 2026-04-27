@@ -1,5 +1,3 @@
-use std::thread::current;
-
 use crate::core::typing_test::TypingTest;
 
 // Pos of a single word on the screen
@@ -43,17 +41,21 @@ impl TestView {
     pub fn new(viewport: ViewportConfig) -> Self {
         Self {
             viewport,
-            layouts: vec![WordLayout {
-                word_index: 0,
-                line_number: 4,
-                x_position: 1,
-            }],
+            layouts: Vec::new(),
             visible_start_index: 0,
         }
     }
 
+    pub fn viewport(&self) -> &ViewportConfig {
+        &self.viewport
+    }
+
     pub fn layouts(&self) -> &[WordLayout] {
         &self.layouts
+    }
+
+    pub fn on_resize(&mut self, new_width: u16) {
+        self.viewport = ViewportConfig::new(new_width, self.viewport.visible_lines);
     }
 
     // REcompute word positions based on test state
@@ -73,12 +75,12 @@ impl TestView {
         }
 
         let mut current_line = 0;
-        let mut current_x = 0;
+        let mut current_x: usize = 0;
 
-        for (i, &width) in word_widths.iter().enumerate() {
+        for (i, &width) in word_widths[self.visible_start_index..].iter().enumerate() {
             let word_index = self.visible_start_index + i;
-            let padd_x = if current_x > 0 { 1 } else { 0 }; // Space between chars unless first
-            let total_needed = current_x + padd_x + width;
+            let space_before = if current_x > 0 { 1 } else { 0 }; // Space between chars unless first
+            let total_needed = current_x + space_before + width;
 
             // Dont wrap a long first word
             if total_needed > self.viewport.width && current_x > 0 {

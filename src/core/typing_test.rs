@@ -29,7 +29,7 @@ impl TypingTest {
         let mut wordlist = WordList::new(&config.wordset)?;
 
         let words = wordlist
-            .gen_words(10)
+            .gen_words(100)
             .into_iter()
             .map(WordState::new)
             .collect();
@@ -53,6 +53,34 @@ impl TypingTest {
 
     pub fn current_input(&self) -> &str {
         &self.current_input
+    }
+
+    pub fn handle_space(&mut self) {
+        if self.current_word_index > self.words.len() {
+            return;
+        }
+
+        self.words[self.current_word_index].typed = Some(self.current_input.clone());
+
+        self.current_word_index += 1;
+        self.current_input.clear()
+    }
+
+    pub fn handle_backspace(&mut self) {
+        if self.current_input.is_empty() && self.config.freedom_mode && self.current_word_index > 0
+        {
+            self.current_word_index -= 1;
+            self.current_input = self.words[self.current_word_index]
+                .typed
+                .take()
+                .unwrap_or_default()
+        } else {
+            self.current_input.pop();
+        }
+    }
+
+    pub fn handle_char(&mut self, c: char) {
+        self.current_input.push(c);
     }
 
     pub fn append_words(&mut self) {}

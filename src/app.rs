@@ -1,14 +1,13 @@
-use std::{io::Write, time::Duration};
+use std::time::Duration;
 
-use crossterm::{
-    event::{self, Event},
-    queue,
-    style::{Print, ResetColor, SetForegroundColor},
-};
+use crossterm::event;
 
+use crate::core::game::Game;
+use crate::error::Result;
+use crate::terminal::Terminal;
 use crate::ui::renderer::Renderer;
-use crate::{core::game::Game, terminal::Terminal};
-use crate::{core::word_pool::WordList, error::Result};
+use crate::ui::theme::Theme;
+
 pub struct App {
     terminal: Terminal,
     renderer: Renderer,
@@ -27,15 +26,13 @@ impl App {
 
         // println!("{:?}", tenwords);
 
-        let terminal = Terminal::new()?;
-
-        let renderer = Renderer::new();
-
         let (terminal_width, _) = Terminal::size();
 
         // renderer.render(terminal.stdout())?;
 
+        let terminal = Terminal::new()?;
         let game = Game::new(terminal_width)?;
+        let renderer = Renderer::new(Theme::gruvbox());
 
         Ok(Self {
             terminal,
@@ -51,10 +48,7 @@ impl App {
 
             if event::poll(Duration::from_millis(30))? {
                 let ev = event::read()?;
-                match ev {
-                    Event::Key(key) => self.game.handle_keys(key),
-                    _ => {}
-                }
+                self.game.handle_event(ev);
             }
 
             self.game.tick();

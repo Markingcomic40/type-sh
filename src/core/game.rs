@@ -1,4 +1,4 @@
-use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};
 
 use crate::core::config::TestConfig;
 use crate::error::Result;
@@ -57,9 +57,48 @@ impl Game {
         &self.state
     }
 
+    pub fn handle_event(&mut self, event: Event) {
+        match event {
+            Event::Key(key) => {
+                self.handle_keys(key);
+            }
+            Event::Resize(width, ..) => {
+                self.terminal_width = width;
+
+                if let GameState::Running { view, .. } = &mut self.state {
+                    view.on_resize(width);
+                }
+            }
+            _ => {}
+        }
+    }
+
     pub fn handle_keys(&mut self, key: KeyEvent) {
         if key.modifiers.contains(KeyModifiers::CONTROL) && key.code == KeyCode::Char('c') {
             self.should_quit = true;
         }
+
+        // Darn this borrow bs is annoying
+        match &mut self.state {
+            GameState::Running { test, view } => Self::handle_test_keys(test, view, key),
+            _ => {}
+        }
     }
+
+    fn handle_test_keys(test: &mut TypingTest, view: &TestView, key: KeyEvent) {
+        match key.code {
+            KeyCode::Char(' ') => {
+                test.handle_space();
+            }
+            KeyCode::Char(c) if !key.modifiers.contains(KeyModifiers::CONTROL) => {
+                test.handle_char(c);
+            }
+            KeyCode::Backspace => {
+                test.handle_backspace();
+            }
+            _ => {}
+        }
+    }
+
+    // fn can_accept_char() {}
 }

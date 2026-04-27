@@ -1,0 +1,8 @@
+{
+  "background": null,
+  "primary": [203, 204, 198],
+  "secondary": [92, 103, 115],
+  "correct": [170, 217, 76],
+  "incorrect": [255, 51, 51],
+  "incorrect_subtle": [179, 36, 36]
+}
