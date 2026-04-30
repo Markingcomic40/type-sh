@@ -24,7 +24,7 @@ impl Default for TestConfig {
             has_punctuation: false,
             has_numbers: false,
             freedom_mode: true,
-            mode: Gamemode::Zen,
+            mode: Gamemode::Timed(10),
         }
     }
 }

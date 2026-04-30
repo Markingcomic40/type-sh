@@ -42,3 +42,19 @@ impl Drop for Terminal {
         let _ = terminal::disable_raw_mode();
     }
 }
+
+// WHY CANT I FIGURE OUT THE KLALW RESIZE oIAJWDkwad
+pub fn install_panic_hook() {
+    let original_hook = std::panic::take_hook();
+
+    std::panic::set_hook(Box::new(move |info| {
+        let _ = execute!(
+            stdout(),
+            SetCursorStyle::DefaultUserShape,
+            cursor::Show,
+            LeaveAlternateScreen
+        );
+        let _ = terminal::disable_raw_mode();
+        original_hook(info);
+    }));
+}
