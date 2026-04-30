@@ -31,8 +31,14 @@ impl TypingTest {
     pub fn new(config: TestConfig) -> Result<Self> {
         let mut wordlist = WordList::new(&config.wordset)?;
 
+        let n_words = match config.mode {
+            Gamemode::Timed(_) => 20,
+            Gamemode::Words(n) => n,
+            Gamemode::Zen => 20,
+        };
+
         let words = wordlist
-            .gen_words(100)
+            .gen_words(n_words as usize)
             .into_iter()
             .map(WordState::new)
             .collect();
@@ -118,7 +124,8 @@ impl TypingTest {
     pub fn is_finished(&self) -> bool {
         match self.config.mode {
             Gamemode::Timed(t) => self.elapsed_secs_u64() >= t,
-            _ => false,
+            Gamemode::Words(_) => self.current_word_index >= self.words.len(),
+            Gamemode::Zen => false,
         }
     }
 }
