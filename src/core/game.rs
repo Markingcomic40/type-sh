@@ -50,6 +50,10 @@ impl Game {
             if view.update_layout(test) {
                 test.append_words();
             }
+
+            if test.is_finished() {
+                self.should_quit = true;
+            }
         }
     }
 
@@ -99,6 +103,5 @@ impl Game {
             _ => {}
         }
     }
-
     // fn can_accept_char() {}
 }

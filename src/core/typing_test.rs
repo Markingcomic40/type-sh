@@ -1,4 +1,6 @@
-use crate::core::config::TestConfig;
+use std::time::Instant;
+
+use crate::core::config::{Gamemode, TestConfig};
 use crate::core::word_pool::WordList;
 use crate::error::Result;
 
@@ -22,6 +24,7 @@ pub struct TypingTest {
     words: Vec<WordState>,
     current_word_index: usize,
     current_input: String,
+    start_time: Option<Instant>,
 }
 
 impl TypingTest {
@@ -40,6 +43,7 @@ impl TypingTest {
             words,
             current_word_index: 0,
             current_input: String::new(),
+            start_time: None,
         })
     }
 
@@ -53,6 +57,23 @@ impl TypingTest {
 
     pub fn current_input(&self) -> &str {
         &self.current_input
+    }
+
+    pub fn remaining_secs(&self) -> Option<u64> {
+        if let Gamemode::Timed(t) = self.config.mode {
+            let elapsed = self.elapsed_secs_u64();
+            Some(t.saturating_sub(elapsed))
+        } else {
+            None
+        }
+    }
+
+    pub fn elapsed_secs_u64(&self) -> u64 {
+        self.start_time.map(|t| t.elapsed().as_secs()).unwrap_or(0)
+    }
+
+    pub fn has_started(&self) -> bool {
+        self.start_time.is_some()
     }
 
     pub fn handle_space(&mut self) {
@@ -80,8 +101,24 @@ impl TypingTest {
     }
 
     pub fn handle_char(&mut self, c: char) {
+        if !self.has_started() {
+            self.start_time = Some(Instant::now());
+        }
+
         self.current_input.push(c);
     }
 
-    pub fn append_words(&mut self) {}
+    pub fn append_words(&mut self) {
+        if matches!(self.config.mode, Gamemode::Timed(_) | Gamemode::Zen) {
+            let new_words = self.wordlist.gen_words(20);
+            self.words.extend(new_words.into_iter().map(WordState::new));
+        }
+    }
+
+    pub fn is_finished(&self) -> bool {
+        match self.config.mode {
+            Gamemode::Timed(t) => self.elapsed_secs_u64() >= t,
+            _ => false,
+        }
+    }
 }

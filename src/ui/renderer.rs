@@ -11,6 +11,8 @@ use crate::core::typing_test::{TypingTest, WordState};
 use crate::ui::test_view::{TestView, WordLayout};
 use crate::ui::theme::Theme;
 
+const TEXT_START_ROW: u16 = 5;
+
 pub struct Renderer {
     pub theme: Theme,
 }
@@ -47,6 +49,23 @@ impl Renderer {
 
         let h_offest = view.viewport().h_offset;
 
+        if let Some(remaining) = test.remaining_secs() {
+            let timer_text = format!("{remaining}");
+            let color = if test.has_started() {
+                self.theme.primary
+            } else {
+                self.theme.secondary
+            };
+
+            queue!(
+                stdout,
+                cursor::MoveTo(h_offest, TEXT_START_ROW - 2),
+                SetForegroundColor(color),
+                Print(&timer_text),
+                ResetColor
+            )?
+        }
+
         let mut cursor_pos: Option<(u16, u16)> = None;
 
         for &WordLayout {
@@ -60,7 +79,7 @@ impl Renderer {
             }
 
             let word_x = h_offest + x_position as u16;
-            let word_y = 4 + line_number as u16;
+            let word_y = TEXT_START_ROW + line_number as u16;
 
             queue!(stdout, cursor::MoveTo(word_x, word_y))?;
 
@@ -89,14 +108,12 @@ impl Renderer {
         let curr_index = test.current_word_index();
 
         match word_index.cmp(&curr_index) {
-            std::cmp::Ordering::Less => self.render_completed_word(stdout, word)?,
+            std::cmp::Ordering::Less => self.render_completed_word(stdout, word),
             std::cmp::Ordering::Equal => {
-                self.render_active_word(stdout, word, test.current_input())?
+                self.render_active_word(stdout, word, test.current_input())
             }
-            std::cmp::Ordering::Greater => self.render_upcoming_word(stdout, word)?,
+            std::cmp::Ordering::Greater => self.render_upcoming_word(stdout, &word.target),
         }
-
-        Ok(())
     }
 
     fn render_completed_word(&self, stdout: &mut Stdout, word: &WordState) -> std::io::Result<()> {
@@ -112,11 +129,12 @@ impl Renderer {
     ) -> std::io::Result<()> {
         self.render_char_diff(stdout, &word.target, input, self.theme.secondary)
     }
-    fn render_upcoming_word(&self, stdout: &mut Stdout, word: &WordState) -> std::io::Result<()> {
+
+    fn render_upcoming_word(&self, stdout: &mut Stdout, target: &str) -> std::io::Result<()> {
         queue!(
             stdout,
             SetForegroundColor(self.theme.secondary),
-            Print(&word.target),
+            Print(target),
             ResetColor,
         )
     }

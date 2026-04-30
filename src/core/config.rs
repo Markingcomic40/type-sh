@@ -1,5 +1,5 @@
 pub const DEFAULT_WORDSET: &str = "english_200";
-pub const DEFAULT_TIMED_SECS: u64 = 30;
+pub const DEFAULT_TIMED_SECS: u64 = 5;
 
 #[derive(Clone, Debug)]
 pub enum Gamemode {
