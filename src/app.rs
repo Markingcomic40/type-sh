@@ -4,6 +4,7 @@ use crossterm::event;
 
 use crate::core::game::Game;
 use crate::error::Result;
+use crate::preferences::Preferences;
 use crate::terminal::Terminal;
 use crate::ui::renderer::Renderer;
 use crate::ui::theme::Theme;
@@ -31,7 +32,10 @@ impl App {
         // renderer.render(terminal.stdout())?;
 
         let terminal = Terminal::new()?;
-        let game = Game::new(terminal_width)?;
+
+        let prefs = Preferences::default();
+
+        let game = Game::new(&prefs, terminal_width)?;
         let renderer = Renderer::new(Theme::gruvbox());
 
         Ok(Self {

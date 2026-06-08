@@ -6,10 +6,16 @@ use crossterm::{
     terminal,
 };
 
-use crate::core::game::GameState;
-use crate::core::typing_test::{TypingTest, WordState};
 use crate::ui::test_view::{TestView, WordLayout};
 use crate::ui::theme::Theme;
+use crate::{
+    core::typing_test::{TypingTest, WordState},
+    ui::menu_view::MenuView,
+};
+use crate::{
+    core::{game::GameState, menu::MenuState},
+    ui::menu_view::compute_menu_layout,
+};
 
 const TEXT_START_ROW: u16 = 5;
 
@@ -23,8 +29,6 @@ impl Renderer {
     }
 
     pub fn render(&self, stdout: &mut Stdout, state: &GameState) -> std::io::Result<()> {
-        // let (w, h) = terminal::size().unwrap_or((80, 24));
-
         queue!(
             stdout,
             cursor::MoveTo(0, 0),
@@ -32,11 +36,133 @@ impl Renderer {
         )?;
 
         match state {
+            GameState::Menu(menu) => {
+                let layout = compute_menu_layout(menu);
+                self.render_menu(stdout, &layout)?
+            }
             GameState::Running { test, view } => self.render_test(stdout, test, view)?,
             _ => panic!("AAA"),
         }
 
         stdout.flush()
+    }
+
+    fn render_menu(&self, stdout: &mut Stdout, layout: &MenuView) -> std::io::Result<()> {
+        let (width, _) = terminal::size().unwrap_or((80, 24));
+
+        let cx = width / 2;
+
+        if layout.is_inputting {
+            queue!(stdout, cursor::Show)?;
+        } else {
+            queue!(stdout, cursor::Hide)?;
+        }
+
+        let banner = "TypeSH";
+        queue!(
+            stdout,
+            cursor::MoveTo(cx.saturating_sub(banner.len() as u16 / 2), 1),
+            SetForegroundColor(self.theme.primary),
+            Print(banner),
+            ResetColor,
+        )?;
+
+        let hint = if layout.is_inputting {
+            "enter confirm  |  esc cancel"
+        } else {
+            "enter start  |  e edit  |  tab navigate  |  <-> select  |  esc quit"
+        };
+        queue!(
+            stdout,
+            cursor::MoveTo(cx.saturating_sub(hint.len() as u16 / 2), 3),
+            SetForegroundColor(self.theme.secondary),
+            Print(hint),
+            ResetColor,
+        )?;
+
+        let label_col_width = 10u16;
+        let content_start = cx.saturating_sub(30);
+        let mut row = 6u16;
+        let mut input_cursor: Option<(u16, u16)> = None;
+
+        for section in &layout.sections {
+            if section.is_hidden {
+                continue;
+            }
+
+            let label_color = if section.is_focused {
+                self.theme.primary
+            } else {
+                self.theme.secondary
+            };
+            queue!(
+                stdout,
+                cursor::MoveTo(content_start, row),
+                SetForegroundColor(label_color),
+                Print(section.label),
+                ResetColor,
+            )?;
+
+            if let Some(input) = &section.active_input {
+                let input_x = content_start + label_col_width;
+
+                if input.buffer.is_empty() {
+                    queue!(
+                        stdout,
+                        cursor::MoveTo(input_x, row),
+                        SetForegroundColor(self.theme.secondary),
+                        Print(input.placeholder),
+                        ResetColor,
+                    )?;
+                } else {
+                    queue!(
+                        stdout,
+                        cursor::MoveTo(input_x, row),
+                        SetForegroundColor(self.theme.primary),
+                        Print(&input.buffer),
+                        ResetColor,
+                    )?;
+                }
+                input_cursor = Some((input_x + input.buffer.len() as u16, row));
+            } else {
+                let mut x = content_start + label_col_width;
+                for (i, option) in section.options.iter().enumerate() {
+                    let is_selected = i == section.selected_index;
+                    let color = if is_selected {
+                        self.theme.primary
+                    } else {
+                        self.theme.secondary
+                    };
+
+                    queue!(
+                        stdout,
+                        cursor::MoveTo(x, row),
+                        SetForegroundColor(color),
+                        Print(option),
+                        ResetColor,
+                    )?;
+
+                    x += option.len() as u16 + 3;
+                }
+            }
+
+            row += 2;
+        }
+
+        if let Some(err) = layout.error_message {
+            queue!(
+                stdout,
+                cursor::MoveTo(content_start + label_col_width, row),
+                SetForegroundColor(self.theme.incorrect),
+                Print(err),
+                ResetColor,
+            )?;
+        }
+
+        if let Some((x, y)) = input_cursor {
+            queue!(stdout, cursor::MoveTo(x, y))?;
+        }
+        Ok(())
     }
 
     fn render_test(

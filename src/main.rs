@@ -1,6 +1,7 @@
 mod app;
 mod core;
 mod error;
+mod preferences;
 mod terminal;
 mod ui;
 
