@@ -33,7 +33,7 @@ impl App {
 
         let terminal = Terminal::new()?;
 
-        let prefs = Preferences::default();
+        let prefs = Preferences::load();
 
         let game = Game::new(&prefs, terminal_width)?;
         let renderer = Renderer::new(Theme::gruvbox());
@@ -58,6 +58,7 @@ impl App {
             self.game.tick();
 
             if self.game.should_quit() {
+                let _ = self.game.preferences().save()?;
                 break;
             }
         }

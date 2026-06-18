@@ -1,7 +1,9 @@
+use serde::{Deserialize, Serialize};
+
 pub const DEFAULT_WORDSET: &str = "english_200";
 pub const DEFAULT_TIMED_SECS: u64 = 5;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Gamemode {
     Timed(u64),
     Words(u64),

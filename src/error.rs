@@ -23,6 +23,9 @@ pub enum AppError {
         name: String,
         source: Box<dyn std::error::Error + Send + Sync>,
     },
+
+    #[error("Failed to load save {0}")]
+    Config(String),
 }
 
 pub type Result<T> = std::result::Result<T, AppError>;

@@ -368,6 +368,21 @@ impl MenuState {
         }
     }
 
+    pub fn to_preferences(&self) -> Preferences {
+        let config: TestConfig = self.to_test_config();
+        Preferences {
+            wordset: config.wordset,
+            mode: config.mode,
+            theme: if self.selected_theme < BUILTIN_THEMES.len() {
+                BUILTIN_THEMES[self.selected_theme]
+            } else {
+                self.custom_theme.as_deref().unwrap_or("gruvbox")
+            }
+            .to_string(),
+            freedom_mode: self.selected_freedom == 1,
+        }
+    }
+
     // --
 
     // TODO: What was I smoking when i set this name.... ig i cant really think of a better one rnow tbh but

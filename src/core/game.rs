@@ -69,6 +69,13 @@ impl Game {
         &self.state
     }
 
+    pub fn preferences(&self) -> Preferences {
+        match &self.state {
+            GameState::Menu(menu) => menu.to_preferences(),
+            _ => self.menu_snapshot.to_preferences(),
+        }
+    }
+
     pub fn handle_event(&mut self, event: Event) {
         match event {
             Event::Key(key) => {
