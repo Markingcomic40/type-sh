@@ -77,7 +77,7 @@ fn duration_layout(menu: &MenuState) -> SectionLayout {
             ("times", options)
         }
         1 => {
-            let mut options: Vec<String> = WORDS_PRESETS.iter().map(|p| format!("{p}s")).collect();
+            let mut options: Vec<String> = WORDS_PRESETS.iter().map(|p| format!("{p}")).collect();
             options.push(custom_value_label(
                 &menu.custom_duration.map(|n| n.to_string()),
             ));
@@ -130,7 +130,7 @@ fn theme_layout(menu: &MenuState) -> SectionLayout {
 
 fn freedom_layout(menu: &MenuState) -> SectionLayout {
     SectionLayout {
-        label: "freedom mode",
+        label: "freedom",
         options: BOOLEAN_OPTIONS
             .iter()
             .map(|option| option.to_string())

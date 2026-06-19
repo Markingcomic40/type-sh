@@ -257,10 +257,12 @@ impl MenuState {
                 self.selected_duration = (self.selected_duration + 1) % max;
             }
             MenuSection::Wordlist => {
-                self.selected_wordlist = (self.selected_wordlist + 1) % BUILTIN_WORDLISTS.len() + 1;
+                let max = BUILTIN_WORDLISTS.len() + 1;
+                self.selected_wordlist = (self.selected_wordlist + 1) % max;
             }
             MenuSection::Theme => {
-                self.selected_theme = (self.selected_theme + 1) % BUILTIN_THEMES.len() + 1;
+                let max = BUILTIN_THEMES.len() + 1;
+                self.selected_theme = (self.selected_theme + 1) % max;
             }
             MenuSection::Freedom => {
                 // It doesnt look so coherent/pretty but its cleaner than a modulus....
@@ -313,11 +315,11 @@ impl MenuState {
             }
             MenuSection::Wordlist => {
                 let max = BUILTIN_WORDLISTS.len() + 1;
-                self.selected_wordlist = (self.selected_wordlist + 1) % max;
+                self.selected_wordlist = (self.selected_wordlist + max - 1) % max;
             }
             MenuSection::Theme => {
                 let max = BUILTIN_THEMES.len() + 1;
-                self.selected_theme = (self.selected_theme + 1) % max;
+                self.selected_theme = (self.selected_theme + max - 1) % max;
             }
             MenuSection::Freedom => {
                 // It doesnt look so coherent/pretty but its cleaner than a modulus....
@@ -337,8 +339,8 @@ impl MenuState {
 
         let mode = match self.selected_mode {
             0 => {
-                let secs = if self.selected_mode < TIMED_PRESETS.len() {
-                    TIMED_PRESETS[self.selected_mode]
+                let secs = if self.selected_duration < TIMED_PRESETS.len() {
+                    TIMED_PRESETS[self.selected_duration]
                 } else {
                     // TODO: THE DEFAULT SHOULD BE SET ESLEWHERE
                     self.custom_duration.unwrap_or(30)
@@ -348,8 +350,8 @@ impl MenuState {
             }
 
             1 => {
-                let count = if self.selected_mode < TIMED_PRESETS.len() {
-                    TIMED_PRESETS[self.selected_mode]
+                let count = if self.selected_duration < TIMED_PRESETS.len() {
+                    TIMED_PRESETS[self.selected_duration]
                 } else {
                     self.custom_duration.unwrap_or(50)
                 };
