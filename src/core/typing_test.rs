@@ -1,6 +1,7 @@
 use std::time::Instant;
 
 use crate::core::config::{Gamemode, TestConfig};
+use crate::core::statistics::{Statistics, TestResults};
 use crate::core::word_pool::WordList;
 use crate::error::Result;
 
@@ -25,6 +26,7 @@ pub struct TypingTest {
     current_word_index: usize,
     current_input: String,
     start_time: Option<Instant>,
+    statistics: Statistics,
 }
 
 impl TypingTest {
@@ -50,6 +52,7 @@ impl TypingTest {
             current_word_index: 0,
             current_input: String::new(),
             start_time: None,
+            statistics: Statistics::new(),
         })
     }
 
@@ -112,6 +115,13 @@ impl TypingTest {
         }
 
         self.current_input.push(c);
+
+        let expected = self.words()[self.current_word_index]
+            .target
+            .chars()
+            .nth(self.current_input.len() - 1);
+
+        self.statistics.record_char(expected == Some(c));
     }
 
     pub fn append_words(&mut self) {
@@ -127,5 +137,13 @@ impl TypingTest {
             Gamemode::Words(_) => self.current_word_index >= self.words.len(),
             Gamemode::Zen => false,
         }
+    }
+
+    pub fn into_result(self) -> TestResults {
+        self.statistics.into_results(
+            self.start_time
+                .map(|t| t.elapsed().as_secs_f32())
+                .unwrap_or(0.0),
+        )
     }
 }

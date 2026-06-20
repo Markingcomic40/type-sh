@@ -2,6 +2,7 @@ use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};
 
 use crate::core::config::TestConfig;
 use crate::core::menu::MenuState;
+use crate::core::statistics::TestResults;
 use crate::error::Result;
 use crate::preferences::Preferences;
 use crate::ui::test_view::ViewportConfig;
@@ -13,7 +14,7 @@ pub enum GameState {
         test: Box<TypingTest>,
         view: TestView,
     },
-    Results,
+    Results(TestResults),
 }
 
 pub struct Game {
@@ -54,6 +55,23 @@ impl Game {
     }
 
     pub fn tick(&mut self) {
+        let test_finished = matches!(
+            &self.state,
+            GameState::Running { test, .. } if test.is_finished()
+        );
+
+        // Rust shenanignas
+        if test_finished {
+            // Temporarily replace with a dummy, maybe ill make a Dummy state?
+            let state =
+                std::mem::replace(&mut self.state, GameState::Menu(self.menu_snapshot.clone()));
+
+            // Should be true but
+            if let GameState::Running { test, .. } = state {
+                self.state = GameState::Results(test.into_result());
+            }
+        }
+
         if let GameState::Running { test, view } = &mut self.state {
             if view.update_layout(test) {
                 test.append_words();
@@ -101,7 +119,7 @@ impl Game {
         match &mut self.state {
             GameState::Menu(_) => self.handle_menu_keys(key),
             GameState::Running { test, view } => Self::handle_test_keys(test, view, key),
-            _ => {}
+            GameState::Results(_) => self.handle_results_key(key),
         }
     }
 
@@ -185,6 +203,14 @@ impl Game {
             _ => {}
         }
     }
+
+    fn handle_results_key(&mut self, key: KeyEvent) {
+        match key.code {
+            KeyCode::Esc => self.should_quit = true,
+            KeyCode::Tab | KeyCode::Enter => self.return_to_menu(),
+            _ => {}
+        }
+    }
     // fn can_accept_char() {}
 
     fn start_test(&mut self) {
@@ -215,5 +241,9 @@ impl Game {
             test,
             view: viewport,
         };
+    }
+
+    fn return_to_menu(&mut self) {
+        self.state = GameState::Menu(self.menu_snapshot.clone());
     }
 }

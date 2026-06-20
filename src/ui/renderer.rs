@@ -6,8 +6,11 @@ use crossterm::{
     terminal,
 };
 
-use crate::ui::test_view::{TestView, WordLayout};
 use crate::ui::theme::Theme;
+use crate::{
+    core::statistics::TestResults,
+    ui::test_view::{TestView, WordLayout},
+};
 use crate::{
     core::typing_test::{TypingTest, WordState},
     ui::menu_view::MenuView,
@@ -41,7 +44,7 @@ impl Renderer {
                 self.render_menu(stdout, &layout)?
             }
             GameState::Running { test, view } => self.render_test(stdout, test, view)?,
-            _ => panic!("AAA"),
+            GameState::Results(results) => self.render_results(stdout, results)?,
         }
 
         stdout.flush()
@@ -162,6 +165,83 @@ impl Renderer {
         if let Some((x, y)) = input_cursor {
             queue!(stdout, cursor::MoveTo(x, y))?;
         }
+        Ok(())
+    }
+
+    // TODO: Maybe we keep track of user stats in the future and have a page for rendering stats :eyes: or its like in the results page to compare historical
+    fn render_results(&self, stdout: &mut Stdout, results: &TestResults) -> std::io::Result<()> {
+        let (width, height) = terminal::size().unwrap_or((80, 24));
+
+        queue!(stdout, cursor::Hide)?;
+
+        let cx = width / 2;
+        let cy = height / 3;
+
+        let wpm_text = format!("{:.0}", results.wpm);
+        let wpm_label = "wpm";
+        queue!(
+            stdout,
+            cursor::MoveTo(cx.saturating_sub(wpm_text.len() as u16), cy),
+            SetForegroundColor(self.theme.primary),
+            Print(&wpm_text),
+            ResetColor,
+        )?;
+        queue!(
+            stdout,
+            cursor::MoveTo(
+                cx.saturating_sub(wpm_label.len() as u16),
+                cy.saturating_sub(1)
+            ),
+            SetForegroundColor(self.theme.secondary),
+            Print(wpm_label),
+            ResetColor,
+        )?;
+
+        let stats_y = cy + 3;
+        let stats = [
+            ("raw", format!("{:.0}", results.raw_wpm)),
+            ("acc", format!("{:.1}%", results.accuracy)),
+            ("con", format!("{:.0}%", results.consistency)),
+            ("time", format!("{:.1}s", results.time_elapsed)),
+            (
+                "chars",
+                format!("{}/{}", results.correct_chars, results.total_chars),
+            ),
+        ];
+
+        let col_width = 14u16;
+        let total_width = col_width * stats.len() as u16;
+        let start_x = cx.saturating_sub(total_width / 2);
+
+        for (i, (label, value)) in stats.iter().enumerate() {
+            let x = start_x + (i as u16 * col_width);
+
+            queue!(
+                stdout,
+                cursor::MoveTo(x, stats_y),
+                SetForegroundColor(self.theme.secondary),
+                Print(label),
+                ResetColor,
+            )?;
+
+            queue!(
+                stdout,
+                cursor::MoveTo(x, stats_y + 1),
+                SetForegroundColor(self.theme.primary),
+                Print(value),
+                ResetColor,
+            )?;
+        }
+
+        let hint = "tab menu  |  esc quit";
+        queue!(
+            stdout,
+            cursor::MoveTo(cx.saturating_sub(hint.len() as u16 / 2), stats_y + 4),
+            SetForegroundColor(self.theme.secondary),
+            Print(hint),
+            ResetColor,
+        )?;
+
         Ok(())
     }
 
