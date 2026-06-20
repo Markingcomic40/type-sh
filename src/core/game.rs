@@ -8,6 +8,12 @@ use crate::preferences::Preferences;
 use crate::ui::test_view::ViewportConfig;
 use crate::{core::typing_test::TypingTest, ui::test_view::TestView};
 
+// Unnecessary overengineering but i want to do it
+// TODO: JEeeezus the prop drilling go crazy ill fix it later
+pub enum AppEvent {
+    ThemeChanged(String),
+}
+
 pub enum GameState {
     Menu(MenuState),
     Running {
@@ -94,10 +100,12 @@ impl Game {
         }
     }
 
-    pub fn handle_event(&mut self, event: Event) {
+    pub fn handle_event(&mut self, event: Event) -> Vec<AppEvent> {
+        let mut events: Vec<AppEvent> = Vec::new();
+
         match event {
             Event::Key(key) => {
-                self.handle_keys(key);
+                self.handle_keys(key, &mut events);
             }
             Event::Resize(width, ..) => {
                 self.terminal_width = width;
@@ -108,22 +116,24 @@ impl Game {
             }
             _ => {}
         }
+
+        events
     }
 
-    pub fn handle_keys(&mut self, key: KeyEvent) {
+    pub fn handle_keys(&mut self, key: KeyEvent, events: &mut Vec<AppEvent>) {
         if key.modifiers.contains(KeyModifiers::CONTROL) && key.code == KeyCode::Char('c') {
             self.should_quit = true;
         }
 
         // Darn this borrow bs is annoying
         match &mut self.state {
-            GameState::Menu(_) => self.handle_menu_keys(key),
+            GameState::Menu(_) => self.handle_menu_keys(key, events),
             GameState::Running { test, view } => Self::handle_test_keys(test, view, key),
             GameState::Results(_) => self.handle_results_key(key),
         }
     }
 
-    fn handle_menu_keys(&mut self, key: KeyEvent) {
+    fn handle_menu_keys(&mut self, key: KeyEvent, events: &mut Vec<AppEvent>) {
         // Rust shenanigans: Cant have a &mut of menu and start or quit :)
         enum Action {
             Start,
@@ -135,6 +145,8 @@ impl Game {
             let GameState::Menu(menu) = &mut self.state else {
                 return;
             };
+
+            let theme_before = menu.theme_name().to_string();
 
             let action = if menu.is_inputting() {
                 match key.code {
@@ -178,13 +190,18 @@ impl Game {
                 }
             };
 
+            let theme_after = menu.theme_name().to_string();
+            if theme_before != theme_after {
+                events.push(AppEvent::ThemeChanged(theme_after));
+            }
+
             action
         };
 
         // NOTE: SUrprisingly i accidentally put this isndie the above and it worked?? Maybe it sees menu isnt used anymore and so it drops??
         match action {
             Action::Nada => {}
-            Action::Start => self.start_test(),
+            Action::Start => self.start_test(events),
             Action::Quit => self.should_quit = true,
         }
     }
@@ -213,7 +230,7 @@ impl Game {
     }
     // fn can_accept_char() {}
 
-    fn start_test(&mut self) {
+    fn start_test(&mut self, events: &mut Vec<AppEvent>) {
         let (config, menu_clone) = {
             let GameState::Menu(menu) = &self.state else {
                 return;
@@ -236,6 +253,10 @@ impl Game {
                 return;
             }
         };
+
+        events.push(AppEvent::ThemeChanged(
+            self.menu_snapshot.theme_name().to_string(),
+        ));
 
         self.state = GameState::Running {
             test,

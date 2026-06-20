@@ -37,6 +37,7 @@ impl From<ThemeFile> for Theme {
 pub const BUILTIN_THEMES: &[&str] = &["gruvbox", "ayu-mirage"];
 
 const GRUVBOX_JSON: &str = include_str!("../assets/themes/gruvbox.json");
+const AYU_MIRAGE_JSON: &str = include_str!("../assets/themes/ayu-mirage.json");
 
 #[derive(Debug, Clone)]
 pub struct Theme {
@@ -55,10 +56,17 @@ impl Theme {
         tf.into()
     }
 
+    pub fn ayu_mirage() -> Self {
+        let tf: ThemeFile =
+            serde_json::from_str(AYU_MIRAGE_JSON).expect("embedded ayu-mirage.json is valid");
+        tf.into()
+    }
+
     /// Load a theme by name. Try built-in themes first, then fall back to file path.
     pub fn load(name: &str) -> crate::error::Result<Self> {
         match name {
             "gruvbox" => Ok(Self::gruvbox()),
+            "ayu-mirage" => Ok(Self::ayu_mirage()),
             _ => Self::from_file(name),
         }
     }

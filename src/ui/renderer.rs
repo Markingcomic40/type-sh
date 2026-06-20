@@ -2,11 +2,12 @@ use std::io::{Stdout, Write};
 
 use crossterm::{
     cursor, queue,
-    style::{Print, ResetColor, SetForegroundColor},
+    style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor},
     terminal,
 };
 
 use crate::ui::theme::Theme;
+use crate::{core::game::GameState, ui::menu_view::compute_menu_layout};
 use crate::{
     core::statistics::TestResults,
     ui::test_view::{TestView, WordLayout},
@@ -14,10 +15,6 @@ use crate::{
 use crate::{
     core::typing_test::{TypingTest, WordState},
     ui::menu_view::MenuView,
-};
-use crate::{
-    core::{game::GameState, menu::MenuState},
-    ui::menu_view::compute_menu_layout,
 };
 
 const TEXT_START_ROW: u16 = 5;
@@ -31,7 +28,19 @@ impl Renderer {
         Self { theme }
     }
 
+    pub fn set_theme(&mut self, theme: Theme) {
+        self.theme = theme;
+    }
+
     pub fn render(&self, stdout: &mut Stdout, state: &GameState) -> std::io::Result<()> {
+        let background = self.theme.background.unwrap_or(Color::Reset);
+
+        queue!(
+            stdout,
+            SetBackgroundColor(background),
+            terminal::Clear(terminal::ClearType::All),
+        )?;
+
         queue!(
             stdout,
             cursor::MoveTo(0, 0),

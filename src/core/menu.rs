@@ -402,4 +402,12 @@ impl MenuState {
             _ => false,
         }
     }
+
+    pub fn theme_name(&self) -> &str {
+        if self.selected_theme < BUILTIN_THEMES.len() {
+            BUILTIN_THEMES[self.selected_theme]
+        } else {
+            self.custom_theme.as_deref().unwrap_or("gruvbox")
+        }
+    }
 }

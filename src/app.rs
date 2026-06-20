@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use crossterm::event;
 
-use crate::core::game::Game;
+use crate::core::game::{AppEvent, Game};
 use crate::error::Result;
 use crate::preferences::Preferences;
 use crate::terminal::Terminal;
@@ -52,7 +52,15 @@ impl App {
 
             if event::poll(Duration::from_millis(30))? {
                 let ev = event::read()?;
-                self.game.handle_event(ev);
+                for app_ev in self.game.handle_event(ev) {
+                    match app_ev {
+                        AppEvent::ThemeChanged(name) => {
+                            if let Ok(theme) = Theme::load(&name) {
+                                self.renderer.set_theme(theme);
+                            }
+                        }
+                    }
+                }
             }
 
             self.game.tick();
