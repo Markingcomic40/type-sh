@@ -1,0 +1,67 @@
+---
+import Layout from "../layouts/Layout.astro";
+import TypingSim from "../components/TypingSim.tsx";
+import { site } from "../site.config";
+---
+
+<Layout title="TypeSH — practice typing like a true 10x engineer" bodyClass="no-scroll">
+  <div class="page">
+    <main class="hero">
+      <h1 class="brand">{site.name}</h1>
+      <p class="tagline">{site.tagline} <span class="tagline-joke">{site.taglineJoke}</span></p>
+
+      <div class="typing-host">
+        <TypingSim
+          client:only="react"
+          targetWpm={140}
+          mistakeRate={0.08}
+          oscAmp={22}
+          oscPeriod={18}
+        />
+      </div>
+
+      <div class="cta-row">
+        <button type="button" class="install" id="installBtn" aria-label="Copy install command">
+          <span class="install-prompt">$</span>
+          <span class="install-cmd">{site.install}</span>
+          <span class="install-action">copy</span>
+        </button>
+        <a class="download" href={site.releases}>
+          Download
+          <span class="download-arrow">→</span>
+        </a>
+      </div>
+
+      <div class="meta-row">
+        <span class="meta-item">v{site.version}</span>
+        <span class="meta-dot">·</span>
+        <span class="meta-item">{site.platforms}</span>
+        <span class="meta-dot">·</span>
+        <span class="meta-item">{site.license}</span>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const el = document.getElementById("installBtn");
+    if (el) {
+      el.addEventListener("click", async () => {
+        const cmd = el.querySelector(".install-cmd")?.textContent ?? "";
+        try {
+          await navigator.clipboard.writeText(cmd);
+        } catch {
+          // No clipboard, oh well
+        }
+        const action = el.querySelector(".install-action");
+        el.classList.add("is-copied");
+        if (action) {
+          action.textContent = "copied";
+          setTimeout(() => {
+            action.textContent = "copy";
+            el.classList.remove("is-copied");
+          }, 1400);
+        }
+      });
+    }
+  </script>
+</Layout>

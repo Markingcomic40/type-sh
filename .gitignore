@@ -1,2 +1,7 @@
 /target
 debug.log
+
+# Web landing page (web/)
+web/node_modules
+web/dist
+web/.astro

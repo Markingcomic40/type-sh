@@ -1,0 +1,47 @@
+---
+import "../styles/global.css";
+// Self hosted, latin only. Mono is the variable one so 400/500/700 all come
+// out of a single file
+import "@fontsource/inter/latin-400.css";
+import "@fontsource/inter/latin-500.css";
+import "@fontsource/inter/latin-600.css";
+import "@fontsource/inter/latin-700.css";
+import "@fontsource-variable/jetbrains-mono/wght.css";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import TerminalBg from "../components/TerminalBg.tsx";
+
+interface Props {
+  title: string;
+  description?: string;
+  /** Goes on <body>, "no-scroll" for the landing */
+  bodyClass?: string;
+}
+
+const {
+  title,
+  description = "Practice typing like a true 10x engineer.",
+  bodyClass = "",
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body class={bodyClass}>
+    <!-- Terminal has to be client only, it generates random stuff so SSR
+         would just mismatch. Glass is chill just css -->
+    <div class="bg-layer"><TerminalBg client:only="react" /></div>
+    <div class="bg-glass"></div>
+
+    <Header />
+    <slot />
+    <Footer />
+  </body>
+</html>

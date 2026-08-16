@@ -1,0 +1,606 @@
+@import 'tailwindcss';
+
+/* Every color on the page comes from these. Gruvbox is the default so it looks
+   right with no JS at all, applyScheme() in lib/themes.ts swaps them at runtime.
+   Nothing re-renders since its all var(--c-*) */
+:root {
+  --c-bg: #1d2021;
+  --c-bg2: #282828;
+  --c-termBg: #1d2021;
+  --c-fg: #ebdbb2;
+  --c-fg2: #d5c4a1;
+  --c-muted: #7c6f64;
+  --c-primary: #fabd2f;
+  --c-secondary: #928374;
+  --c-correct: #b8bb26;
+  --c-wrong: #fb4934;
+  --c-wrongSubtle: #cc241d;
+  --c-border: #3c3836;
+  --c-prompt: #8ec07c;
+  --c-path: #83a598;
+  --c-info: #83a598;
+  --c-warn: #fabd2f;
+  --c-err: #fb4934;
+  --c-accent: #d3869b;
+
+  --font-display: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, Menlo, Consolas,
+    monospace;
+
+  --blur-px: 3px;
+}
+
+/* Bridges the tokens into tailwind utilities. `inline` is what makes text-primary
+   and friends emit var(--c-*) so a theme swap reaches them too. Page works fine
+   without this whole block, it just means no themed utilities */
+@theme inline {
+  --color-bg: var(--c-bg);
+  --color-bg2: var(--c-bg2);
+  --color-fg: var(--c-fg);
+  --color-fg2: var(--c-fg2);
+  --color-muted: var(--c-muted);
+  --color-primary: var(--c-primary);
+  --color-secondary: var(--c-secondary);
+  --color-correct: var(--c-correct);
+  --color-wrong: var(--c-wrong);
+  --color-border: var(--c-border);
+  --color-prompt: var(--c-prompt);
+  --color-path: var(--c-path);
+  --color-accent: var(--c-accent);
+  --font-display: var(--font-display);
+  --font-mono: var(--font-mono);
+}
+
+/* -- base -- */
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+html {
+  scroll-behavior: smooth;
+}
+body {
+  background: var(--c-bg);
+  color: var(--c-fg);
+  font-family: var(--font-mono);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+/* Landing doesnt scroll, its one fixed viewport */
+body.no-scroll {
+  height: 100%;
+  overflow: hidden;
+}
+
+/* So swapping themes fades instead of snapping */
+body,
+.term-root,
+.term-line,
+.ts-current,
+.ts-before,
+.ts-after {
+  transition:
+    color 240ms ease,
+    background-color 240ms ease;
+}
+
+/* -- background layers, Layout.astro renders these -- */
+.bg-layer {
+  position: fixed;
+  inset: 0;
+  background: var(--c-termBg);
+  z-index: 0;
+}
+.bg-glass {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  backdrop-filter: blur(var(--blur-px)) saturate(115%);
+  -webkit-backdrop-filter: blur(var(--blur-px)) saturate(115%);
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0, 0, 0, 0.3) 0%,
+    rgba(0, 0, 0, 0.5) 60%,
+    rgba(0, 0, 0, 0.65) 100%
+  );
+}
+/* z-index matters here. position:fixed gives .page its own stacking context so
+   without lifting it the glass paints over the hero and blurs the text too */
+.page {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  z-index: 5;
+  /* Header eats more room at the top than the footer does at the bottom, so
+     centering on the viewport leaves the hero sitting high. Half of this pushes
+     it back down (hero is margin:auto so it centers in whats left) */
+  padding-top: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+}
+
+/* -- terminal background, TerminalBg.tsx renders into these -- */
+.term-root {
+  position: absolute;
+  inset: 0;
+  padding: 32px 56px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--c-fg2);
+  overflow: hidden;
+}
+.term-scroller {
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+.term-line {
+  white-space: pre;
+  font-variant-ligatures: none;
+}
+.term-out {
+  color: var(--c-fg2);
+}
+.term-cmd {
+  color: var(--c-fg);
+}
+.term-prompt {
+  color: var(--c-prompt);
+  font-weight: 500;
+}
+.term-path {
+  color: var(--c-path);
+}
+.term-sep {
+  color: var(--c-muted);
+}
+.term-cmd-text {
+  color: var(--c-fg);
+}
+.term-info {
+  color: var(--c-info);
+}
+.term-warn {
+  color: var(--c-warn);
+}
+.term-err {
+  color: var(--c-err);
+}
+.term-ok {
+  color: var(--c-correct);
+}
+.term-muted {
+  color: var(--c-muted);
+}
+.term-accent {
+  color: var(--c-accent);
+  font-weight: 500;
+}
+.term-cursor {
+  display: inline-block;
+  width: 0.55em;
+  height: 1em;
+  margin-left: 1px;
+  vertical-align: -2px;
+  background: var(--c-fg);
+  animation: blink 1s steps(2, start) infinite;
+}
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* -- hero -- */
+.hero {
+  position: relative;
+  z-index: 5;
+  margin: auto;
+  width: min(1100px, 92vw);
+  padding: 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+}
+.brand {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  font-size: clamp(64px, 9vw, 124px);
+  line-height: 0.95;
+  margin: 0;
+  color: var(--c-fg);
+}
+.tagline {
+  font-family: var(--font-mono);
+  font-size: clamp(14px, 1.3vw, 17px);
+  color: var(--c-fg2);
+  margin: 0;
+  padding-top: 2px;
+  letter-spacing: 0.01em;
+  text-wrap: balance;
+}
+.tagline-joke {
+  color: var(--c-muted);
+}
+
+/* -- typing strip, TypingSim.tsx renders into these -- */
+.typing-host {
+  /* Wider than the hero on purpose so the faded edges push further out, the
+     flex parent still centers it */
+  width: min(1400px, 98vw);
+  margin-top: 0;
+}
+.ts-wrap {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+.ts-line {
+  width: 100%;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: clamp(20px, 2.4vw, 30px);
+  line-height: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  position: relative;
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    #000 26%,
+    #000 74%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    #000 26%,
+    #000 74%,
+    transparent 100%
+  );
+}
+.ts-before,
+.ts-after {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.ts-before {
+  justify-content: flex-end;
+  color: var(--c-secondary);
+  white-space: pre;
+}
+.ts-after {
+  justify-content: flex-start;
+  color: var(--c-secondary);
+  white-space: pre;
+}
+.ts-current {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 6px;
+  color: var(--c-primary);
+  font-weight: 500;
+  border-radius: 6px;
+}
+.ts-current::before {
+  content: '';
+  position: absolute;
+  inset: -6px -2px;
+  background: color-mix(in oklab, var(--c-primary) 12%, transparent);
+  border-radius: 8px;
+  z-index: -1;
+}
+.ts-c {
+  display: inline-block;
+}
+.ts-c-pending {
+  color: var(--c-secondary);
+}
+.ts-c-correct {
+  color: var(--c-primary);
+}
+.ts-c-wrong {
+  color: var(--c-wrong);
+  text-decoration: underline;
+  text-decoration-color: var(--c-wrong);
+  text-underline-offset: 4px;
+}
+.ts-c-overflow {
+  color: var(--c-wrongSubtle);
+  opacity: 0.85;
+}
+.ts-c-done {
+  opacity: 0.78;
+}
+.ts-c-done.ts-c-correct {
+  color: var(--c-primary);
+}
+.ts-c-space {
+  text-decoration: none !important;
+}
+.ts-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.05em;
+  margin-left: 1px;
+  background: var(--c-primary);
+  animation: blink 1s steps(2, start) infinite;
+  align-self: center;
+}
+.ts-meta {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-family: var(--font-mono);
+  color: var(--c-muted);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+}
+.ts-wpm-num {
+  color: var(--c-primary);
+  font-size: 22px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  min-width: 3ch;
+  display: inline-block;
+  text-align: right;
+}
+.ts-wpm-lbl {
+  text-transform: uppercase;
+}
+
+/* -- CTA -- */
+.cta-row {
+  display: flex;
+  align-items: stretch;
+  gap: 14px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.install {
+  appearance: none;
+  border: 1px solid var(--c-border);
+  background: color-mix(in oklab, var(--c-bg2) 88%, transparent);
+  color: var(--c-fg);
+  font-family: var(--font-mono);
+  font-size: 15px;
+  padding: 12px 14px 12px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    transform 80ms ease;
+}
+.install:hover {
+  border-color: var(--c-primary);
+  background: color-mix(in oklab, var(--c-bg2) 95%, transparent);
+}
+.install:active {
+  transform: translateY(1px);
+}
+.install-prompt {
+  color: var(--c-prompt);
+}
+.install-cmd {
+  color: var(--c-fg);
+}
+.install-action {
+  margin-left: 6px;
+  padding: 3px 8px;
+  border-radius: 5px;
+  background: color-mix(in oklab, var(--c-primary) 18%, transparent);
+  color: var(--c-primary);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 500;
+  transition:
+    background 160ms ease,
+    color 160ms ease;
+}
+.install.is-copied .install-action {
+  background: color-mix(in oklab, var(--c-correct) 22%, transparent);
+  color: var(--c-correct);
+}
+.download {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  background: var(--c-primary);
+  color: var(--c-bg);
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 15px;
+  text-decoration: none;
+  border: 1px solid var(--c-primary);
+  transition:
+    transform 80ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease;
+  box-shadow: 0 6px 24px -8px
+    color-mix(in oklab, var(--c-primary) 60%, transparent);
+}
+.download:hover {
+  background: color-mix(in oklab, var(--c-primary) 88%, white);
+}
+.download:active {
+  transform: translateY(1px);
+}
+.download-arrow {
+  transition: transform 200ms ease;
+}
+.download:hover .download-arrow {
+  transform: translateX(3px);
+}
+
+/* -- meta row -- */
+.meta-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--c-muted);
+  letter-spacing: 0.04em;
+}
+.meta-dot {
+  opacity: 0.6;
+}
+
+/* -- site header -- */
+.site-header {
+  position: fixed;
+  top: 64px;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  width: min(1100px, 92vw);
+  margin-inline: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 10px 10px 18px;
+  border-radius: 18px;
+  border: 1px solid color-mix(in oklab, var(--c-border) 80%, transparent);
+  background: color-mix(in oklab, var(--c-bg) 55%, transparent);
+  backdrop-filter: blur(12px) saturate(115%);
+  -webkit-backdrop-filter: blur(12px) saturate(115%);
+}
+.header-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  font-size: 18px;
+  color: var(--c-fg);
+  text-decoration: none;
+}
+.brand-mark {
+  display: block;
+  flex-shrink: 0;
+}
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.header-link-short {
+  display: none;
+}
+.header-cta {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: var(--c-primary);
+  color: var(--c-bg);
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 13px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    background 160ms ease,
+    transform 80ms ease;
+}
+.header-cta:hover {
+  background: color-mix(in oklab, var(--c-primary) 88%, white);
+}
+.header-cta:active {
+  transform: translateY(1px);
+}
+
+/* -- footer -- */
+.site-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 6;
+  padding: 28px 22px;
+  text-align: center;
+}
+.site-footer p {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--c-muted);
+  /* Nothing to click on it, dont let it eat a drag select either */
+  pointer-events: none;
+}
+
+/* -- responsive -- */
+@media (max-width: 640px) {
+  .hero {
+    gap: 20px;
+  }
+  .ts-line {
+    font-size: 18px;
+    height: 52px;
+  }
+  .term-root {
+    padding: 16px 18px;
+    font-size: 12px;
+  }
+  .page {
+    padding-top: 36px;
+  }
+  .site-footer {
+    padding: 18px 14px;
+  }
+  .site-footer p {
+    font-size: 12px;
+  }
+  /* "buy me a coffee!" doesnt fit on a phone */
+  .site-header {
+    top: 10px;
+    padding: 8px 8px 8px 14px;
+    border-radius: 14px;
+  }
+  .header-link-full {
+    display: none;
+  }
+  .header-link-short {
+    display: inline;
+  }
+}
+
+/* Kill the blinking for anyone who asked for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .term-cursor,
+  .ts-caret {
+    animation: none;
+  }
+}
