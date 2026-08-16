@@ -1,4 +1,4 @@
-use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};
+use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 
 use crate::core::config::TestConfig;
 use crate::core::menu::MenuState;
@@ -104,7 +104,7 @@ impl Game {
         let mut events: Vec<AppEvent> = Vec::new();
 
         match event {
-            Event::Key(key) => {
+            Event::Key(key) if key.kind == KeyEventKind::Press => {
                 self.handle_keys(key, &mut events);
             }
             Event::Resize(width, ..) => {
