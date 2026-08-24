@@ -3,6 +3,17 @@ name = "type-sh"
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
+description = "A terminal typing test for real engineers; don't know what the terminal is? Then maybe typing fast is not for you."
+repository = "https://github.com/Markingcomic40/type-sh"
+homepage = "https://typesh.xyz"
+readme = "README.md"
+keywords = ["typing-test", "tui", "wpm", "10x-engineer", "10x-viber"]
+categories = ["command-line-utilities"]
+exclude = ["web/", "docs/", ".github/", ".vscode/", "target/"]
+
+[[bin]]
+name = "typesh"
+path = "src/main.rs"
 
 [dependencies]
 crossterm = "0.29.0"
@@ -11,3 +22,8 @@ rand = "0.10.0"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
 thiserror = "2.0.18"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
