@@ -1,14 +1,12 @@
-// TODO: repo, release install etc.
-
 export const site = {
   name: 'TypeSH',
   tagline: 'Practice typing like a true 10x engineer,',
-  taglineJoke: 'Or typing prompts like a true vibe coder..? type sh',
+  taglineJoke: 'Or typing prompts like a true vibe coder..? type sh B)',
   version: '0.1.0', // in sync with Cargo.toml as of writing this
-  repo: 'https://github.com/yourname/type-sh', // TODO
-  releases: 'https://github.com/yourname/type-sh/releases/latest', // TODO
+  repo: 'https://github.com/Markingcomic40/type-sh',
+  releases: 'https://github.com/Markingcomic40/type-sh/releases/latest',
   install: 'cargo install type-sh',
-  coffee: 'https://buymeacoffee.com/yourname', // TODO
-  platforms: 'macOS · Linux · Windows',
+  coffee: 'https://buymeacoffee.com/markingcomo',
+  platforms: 'macOS | Linux | Windows',
   license: 'MIT',
 } as const;
