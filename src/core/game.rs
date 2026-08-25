@@ -217,6 +217,9 @@ impl Game {
             KeyCode::Backspace => {
                 test.handle_backspace();
             }
+            KeyCode::Esc => {
+                test.finish();
+            }
             _ => {}
         }
     }

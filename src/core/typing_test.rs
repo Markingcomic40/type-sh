@@ -27,6 +27,8 @@ pub struct TypingTest {
     current_input: String,
     start_time: Option<Instant>,
     statistics: Statistics,
+    // Oops for now a hacky fix for zen ill think of something nicer later. tbh its nice to quit midway tho.
+    manually_finished: bool, 
 }
 
 impl TypingTest {
@@ -53,6 +55,7 @@ impl TypingTest {
             current_input: String::new(),
             start_time: None,
             statistics: Statistics::new(),
+            manually_finished: false,
         })
     }
 
@@ -131,7 +134,15 @@ impl TypingTest {
         }
     }
 
+    pub fn finish(&mut self) {
+        self.manually_finished = true;
+    }
+
     pub fn is_finished(&self) -> bool {
+        if self.manually_finished {
+            return true;
+        }
+
         match self.config.mode {
             Gamemode::Timed(t) => self.elapsed_secs_u64() >= t,
             Gamemode::Words(_) => self.current_word_index >= self.words.len(),
