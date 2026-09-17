@@ -7,16 +7,17 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 // Lowercase only, looks better in mono
 const CORPUS: string[] = (
-  'the quick brown fox jumps over the lazy dog while the compiler chews ' +
-  'through another pile of unfinished thoughts and half remembered keywords ' +
+  'build a dating app for horses with elegant profiles stable matches and ' +
+  'fix this ' +
+  'whats the error here ' +
+  'summarize plz ' +
+  'auto x = []<typename T>(T&& v) constexpr { return requires { v + v; } ? v + v : v; }(21); ' +
+  'explain SIMD to me like im five but dont start explaining a variable is ffs I know how to code ' +
+  'I can do all things through x who strengthens me ' +
+  'a swipe right animation call it stirrup and NO EM DASHES FFS ' +
   'lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod ' +
-  'tempor incididunt ut labore et dolore magna aliqua duis aute irure dolor ' +
-  'in reprehenderit voluptate velit esse cillum eu fugiat nulla pariatur ' +
-  'excepteur sint occaecat cupidatat non proident sunt in culpa qui officia ' +
-  'deserunt mollit anim id est laborum at vero eos et accusamus et iusto ' +
-  'odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti ' +
-  'atque corrupti quos dolores et quas molestias excepturi sint occaecati ' +
-  'cupiditate non provident similique sunt in culpa qui officia deserunt'
+  'tempor incididunt ut labore et dolore magna aliqua one more tiny change ' +
+  'int magic[]{2,1,2,3,42,69}; std::cout << *reinterpret_cast<int*>(reinterpret_cast<char*>(magic) + 8); '
 ).split(/\s+/);
 
 const HISTORY_WIN = 20; // how many past words we remember char by char
