@@ -10,7 +10,7 @@ use crate::{
 pub const TIMED_PRESETS: &[u64] = &[5, 15, 30, 60];
 pub const WORDS_PRESETS: &[u64] = &[5, 15, 30, 60];
 pub const MODE_OPTIONS: &[&str] = &["timed", "words", "zen"];
-pub const BUILTIN_WORDLISTS: &[&str] = &["english_200"];
+pub const BUILTIN_WORDLISTS: &[&str] = &["english_200", "rust"];
 pub const BOOLEAN_OPTIONS: &[&str] = &["off", "on"];
 
 enum InputKind {

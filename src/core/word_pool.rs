@@ -3,6 +3,7 @@ use rand::seq::IndexedRandom;
 use crate::error::{AppError, Result};
 
 const ENGLISH_200: &str = include_str!("../assets/english_200.txt");
+const RUST: &str = include_str!("../assets/rust.txt");
 pub struct WordSet;
 
 impl WordSet {
@@ -32,6 +33,7 @@ impl WordSet {
     fn load_builtin(name: &str) -> Option<Vec<String>> {
         let text = match name {
             "english_200" | "english" => ENGLISH_200,
+            "rust" => RUST,
             _ => return None,
         };
 
