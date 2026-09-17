@@ -412,18 +412,23 @@ body,
   color: var(--c-fg);
 }
 .install-action {
+  display: inline-flex;
+  align-items: center;
   margin-left: 6px;
-  padding: 3px 8px;
+  padding: 5px;
   border-radius: 5px;
   background: color-mix(in oklab, var(--c-primary) 18%, transparent);
   color: var(--c-primary);
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-weight: 500;
   transition:
     background 160ms ease,
     color 160ms ease;
+}
+.install-action .icon-check,
+.install.is-copied .install-action .icon-copy {
+  display: none;
+}
+.install.is-copied .install-action .icon-check {
+  display: block;
 }
 .install.is-copied .install-action {
   background: color-mix(in oklab, var(--c-correct) 22%, transparent);
@@ -516,13 +521,11 @@ body,
   align-items: center;
   gap: 10px;
 }
-.header-link-short {
-  display: none;
-}
 .header-cta {
   display: inline-flex;
   align-items: center;
-  padding: 8px 14px;
+  justify-content: center;
+  padding: 8px;
   border-radius: 10px;
   background: var(--c-primary);
   color: var(--c-bg);
@@ -583,17 +586,10 @@ body,
   .site-footer p {
     font-size: 12px;
   }
-  /* "buy me a coffee!" doesnt fit on a phone */
   .site-header {
     top: 10px;
     padding: 8px 8px 8px 14px;
     border-radius: 14px;
-  }
-  .header-link-full {
-    display: none;
-  }
-  .header-link-short {
-    display: inline;
   }
 }
 
