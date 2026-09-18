@@ -100,8 +100,8 @@ body,
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  backdrop-filter: blur(var(--blur-px)) saturate(115%);
   -webkit-backdrop-filter: blur(var(--blur-px)) saturate(115%);
+  backdrop-filter: blur(var(--blur-px)) saturate(115%);
   background: radial-gradient(
     ellipse at center,
     rgba(0, 0, 0, 0.3) 0%,
@@ -498,8 +498,8 @@ body,
   border-radius: 18px;
   border: 1px solid color-mix(in oklab, var(--c-border) 80%, transparent);
   background: color-mix(in oklab, var(--c-bg) 55%, transparent);
-  backdrop-filter: blur(12px) saturate(115%);
   -webkit-backdrop-filter: blur(12px) saturate(115%);
+  backdrop-filter: blur(12px) saturate(115%);
 }
 .header-brand {
   display: inline-flex;
