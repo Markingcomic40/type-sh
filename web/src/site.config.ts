@@ -6,7 +6,7 @@ export const site = {
   repo: 'https://github.com/Markingcomic40/type-sh',
   releases: 'https://github.com/Markingcomic40/type-sh/releases/latest',
   install: 'cargo install type-sh',
-  coffee: 'https://buymeacoffee.com/markingcomo',
+  coffee: 'https://ko-fi.com/luisfergu',
   platforms: 'macOS | Linux | Windows',
   license: 'MIT',
 } as const;
