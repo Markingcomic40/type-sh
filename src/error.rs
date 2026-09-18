@@ -6,26 +6,26 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum AppError {
-    #[error("IO error: {0}")]
+    #[error("io error: {0}")]
     Io(#[from] std::io::Error),
 
-    #[error("Could not load word set '{name}'")]
-    WordSetLoad {
+    #[error("could not read word list '{name}': {source}")]
+    WordList {
         name: String,
         source: std::io::Error,
     },
 
-    #[error("Word set '{0}' is empty")]
-    EmptyWordSet(String),
+    #[error("word list '{0}' is empty")]
+    EmptyWordList(String),
 
-    #[error("Failed to load theme '{name}': {source}")]
-    ThemeLoad {
+    #[error("could not load theme '{name}': {source}")]
+    Theme {
         name: String,
         source: Box<dyn std::error::Error + Send + Sync>,
     },
 
-    #[error("Failed to load save {0}")]
-    Config(String),
+    #[error("could not save settings: {0}")]
+    Settings(String),
 }
 
 pub type Result<T> = std::result::Result<T, AppError>;

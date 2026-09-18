@@ -1,68 +1,63 @@
+use rand::rngs::ThreadRng;
 use rand::seq::IndexedRandom;
 
 use crate::error::{AppError, Result};
 
-const ENGLISH_200: &str = include_str!("../assets/english_200.txt");
-const RUST: &str = include_str!("../assets/rust.txt");
-pub struct WordSet;
+pub const BUILTIN_WORDLISTS: &[&str] = &["english", "rust"];
 
-impl WordSet {
-    pub fn load(name: &str) -> Result<Vec<String>> {
-        if let Some(builtin) = Self::load_builtin(name) {
-            if builtin.is_empty() {
-                return Err(AppError::EmptyWordSet(name.to_string()));
-            }
-
-            return Ok(builtin);
-        }
-
-        let content = std::fs::read_to_string(name).map_err(|source| AppError::WordSetLoad {
-            name: name.to_string(),
-            source,
-        })?;
-
-        let words: Vec<String> = content.lines().map(String::from).collect();
-
-        if words.is_empty() {
-            return Err(AppError::EmptyWordSet(name.to_string()));
-        }
-
-        Ok(words)
-    }
-
-    fn load_builtin(name: &str) -> Option<Vec<String>> {
-        let text = match name {
-            "english_200" | "english" => ENGLISH_200,
-            "rust" => RUST,
-            _ => return None,
-        };
-
-        Some(text.lines().map(String::from).collect())
+fn builtin(name: &str) -> Option<&'static str> {
+    match name {
+        "english" | "english_200" => Some(include_str!("../assets/english_200.txt")),
+        "rust" => Some(include_str!("../assets/rust.txt")),
+        _ => None,
     }
 }
 
+/// Loads a builtin word list by name, or else a whitespace separated word file by path.
+pub fn load(name: &str) -> Result<Vec<String>> {
+    let words: Vec<String> = match builtin(name) {
+        Some(text) => split(text),
+        None => {
+            let text = std::fs::read_to_string(name).map_err(|source| AppError::WordList {
+                name: name.to_owned(),
+                source,
+            })?;
+            split(&text)
+        }
+    };
+
+    if words.is_empty() {
+        return Err(AppError::EmptyWordList(name.to_owned()));
+    }
+
+    Ok(words)
+}
+
+// A word can't contain whitespace for now sadly ill think of sth to maybe be able to load like sentences but idk how thatd work
+fn split(text: &str) -> Vec<String> {
+    text.split_whitespace().map(String::from).collect()
+}
+
 pub struct WordList {
-    source_pool: Vec<String>,
-    rng: rand::rngs::ThreadRng,
+    words: Vec<String>,
+    rng: ThreadRng,
 }
 
 impl WordList {
     pub fn new(name: &str) -> Result<Self> {
-        let source_pool = WordSet::load(name)?;
+        Ok(Self::from_words(load(name)?))
+    }
 
-        Ok(Self {
-            source_pool,
+    pub fn from_words(words: Vec<String>) -> Self {
+        Self {
+            words,
             rng: rand::rng(),
-        })
+        }
     }
 
     pub fn next_word(&mut self) -> &str {
-        self.source_pool
+        self.words
             .choose(&mut self.rng)
-            .expect("pool is non empty")
-    }
-
-    pub fn gen_words(&mut self, n: usize) -> Vec<String> {
-        (0..n).map(|_| self.next_word().to_string()).collect()
+            .expect("word lists are never empty")
     }
 }

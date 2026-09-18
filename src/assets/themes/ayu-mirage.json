@@ -1,8 +1,10 @@
 {
   "background": null,
-  "primary": [203, 204, 198],
-  "secondary": [92, 103, 115],
-  "correct": [170, 217, 76],
-  "incorrect": [255, 51, 51],
-  "incorrect_subtle": [179, 36, 36]
+  "text": [204, 202, 194],
+  "dim": [112, 122, 140],
+  "faint": [61, 70, 86],
+  "accent": [255, 204, 102],
+  "correct": [204, 202, 194],
+  "error": [255, 102, 102],
+  "error_extra": [191, 64, 64]
 }

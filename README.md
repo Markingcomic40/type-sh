@@ -1,6 +1,8 @@
 # TypeSH
 
-Minimal CLI typing test. I wanna write a mini blog or sth on why I built this cause it was as a bit of a rest from AI assisted coding entirely (though I'm planning to break that now cause, idk reasons id write about ig. Oh and to be truly factual web is smth i built a whileeeee ago but not as refined so idk I kinda considered it also part of the end of the project and that was built w ai assistance). But yeah idk my feelings on it have changed quite a bit since I wrote my initial thoughts, and I just cant also get into that mood rn yfm but I also want to push this out cause its been like near done for a v0 for ages haha. Been working on some other projects B)
+Minimal CLI typing test with a fire name.
+
+Started this to learn rust without ai cause man I was so tired of hearing it and missed 'coding'. I feel like it kinda satisfied its purpose at some point so its no longer ai free tho. Ive also come quite to peace w AI ig so I dont even have the energy to write the blog i wanted to write on all that anymore haha. I think as long as you're learning and enjoying building its chill... Have another AI free project now thats a bit more exciting and uh yeah I'll just keep a master branch for when I wanna do old school style on the train or plane or whatever :/
 
 > [typesh.xyz](https://typesh.xyz)
 
@@ -34,20 +36,35 @@ WIP; man i gotta add like a prompt package or sth lmfao.
 
 ## Themes
 
-`gruvbox` and `ayu-mirage`, the superior themes (especially the former), ship built in. For your own, select `custom` on the theme setting and enter a path to a JSON file like:
+`gruvbox` and `ayu-mirage`, the superior themes (especially the former), ship built in. For your own, go to settings, press enter on the theme row and give it a path to a JSON file like:
 
 ```json
 {
   "background": [40, 40, 40],
-  "primary": [235, 219, 178],
-  "secondary": [146, 131, 116],
-  "correct": [184, 187, 38],
-  "incorrect": [251, 73, 52],
-  "incorrect_subtle": [204, 36, 29]
+  "text": [235, 219, 178],
+  "dim": [146, 131, 116],
+  "faint": [80, 73, 69],
+  "accent": [250, 189, 47],
+  "correct": [235, 219, 178],
+  "error": [251, 73, 52],
+  "error_extra": [204, 36, 29]
 }
 ```
 
-Every field is `[r, g, b]`. `background` is optional; leave it out to keep your terminal's own bg.
+Every colour is `[r, g, b]`:
+
+| Field         | Used for                                                   |
+| ------------- | ---------------------------------------------------------- |
+| `text`        | main text                                                  |
+| `dim`         | labels, hints and words you haven't typed yet              |
+| `faint`       | separators and chart axes (defaults to `dim`)              |
+| `accent`      | selections, the timer, your wpm (defaults to `text`)       |
+| `correct`     | correctly typed letters (defaults to `text`)               |
+| `error`       | wrong letters                                              |
+| `error_extra` | letters typed past the end of a word (defaults to `error`) |
+| `background`  | optional; leave it out to keep your terminal's own         |
+
+Themes using the old `primary`/`secondary`/`incorrect`/`incorrect_subtle` names still load.
 
 ## Configuration
 
