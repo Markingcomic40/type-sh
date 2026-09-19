@@ -24,7 +24,8 @@
   --c-accent: #d3869b;
 
   --font-display: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, Menlo, Consolas,
+  --font-mono:
+    'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, Menlo, Consolas,
     monospace;
 
   --blur-px: 3px;
@@ -465,6 +466,24 @@ body,
 }
 .download:hover .download-arrow {
   transform: translateX(3px);
+}
+
+.run-hint {
+  margin: -16px 0 0;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--c-muted);
+  letter-spacing: 0.02em;
+}
+.run-hint-cmd {
+  font-family: inherit;
+  color: var(--c-primary);
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: color-mix(in oklab, var(--c-primary) 12%, transparent);
+}
+.run-hint-note {
+  opacity: 0.7;
 }
 
 /* -- meta row -- */
