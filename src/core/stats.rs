@@ -1,5 +1,7 @@
 use std::time::Duration;
 
+use serde::{Deserialize, Serialize};
+
 /// every five characters count as one word
 const CHARS_PER_WORD: f64 = 5.0;
 
@@ -23,7 +25,7 @@ pub struct Keystroke {
 }
 
 /// How the final text compares against the target, character by character
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CharCounts {
     pub correct: usize,
     pub incorrect: usize,
@@ -34,7 +36,7 @@ pub struct CharCounts {
 }
 
 /// One second of a test
-#[derive(Clone, Copy, Debug, Default, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct Second {
     /// Net WPM averaged over the whole test up to the end of this second
     pub wpm: f64,
@@ -43,7 +45,7 @@ pub struct Second {
     pub errors: usize,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Report {
     pub wpm: f64,
     pub raw: f64,

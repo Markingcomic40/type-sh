@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Deserializer, Serialize};
 
-use crate::core::config::{Limit, TestConfig};
+use crate::core::config::{Limit, Rules, TestConfig};
 use crate::core::word_pool::{self, BUILTIN_WORDLISTS};
 use crate::error::{AppError, Result};
 use crate::ui::theme::{Theme, BUILTIN_THEMES};
@@ -128,8 +128,8 @@ impl Settings {
         self
     }
 
-    pub fn test_config(&self, seed: u64) -> TestConfig {
-        TestConfig {
+    pub fn rules(&self) -> Rules {
+        Rules {
             limit: match self.mode {
                 Mode::Time => Limit::Time(self.time),
                 Mode::Words => Limit::Words(self.words),
@@ -137,8 +137,11 @@ impl Settings {
             },
             wordlist: self.wordlist.clone(),
             freedom: self.freedom,
-            seed,
         }
+    }
+
+    pub fn test_config(&self, seed: u64) -> TestConfig {
+        self.rules().with_seed(seed)
     }
 
     /// The time or word count for the current mode.

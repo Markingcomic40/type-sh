@@ -1,6 +1,6 @@
 use rand::rngs::StdRng;
-use rand::SeedableRng;
 use rand::seq::IndexedRandom;
+use rand::SeedableRng;
 
 use crate::error::{AppError, Result};
 
