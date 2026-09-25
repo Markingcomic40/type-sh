@@ -1,4 +1,5 @@
-use rand::rngs::ThreadRng;
+use rand::rngs::StdRng;
+use rand::SeedableRng;
 use rand::seq::IndexedRandom;
 
 use crate::error::{AppError, Result};
@@ -40,18 +41,18 @@ fn split(text: &str) -> Vec<String> {
 
 pub struct WordList {
     words: Vec<String>,
-    rng: ThreadRng,
+    rng: StdRng,
 }
 
 impl WordList {
-    pub fn new(name: &str) -> Result<Self> {
-        Ok(Self::from_words(load(name)?))
+    pub fn new(name: &str, seed: u64) -> Result<Self> {
+        Ok(Self::from_words(load(name)?, seed))
     }
 
-    pub fn from_words(words: Vec<String>) -> Self {
+    pub fn from_words(words: Vec<String>, seed: u64) -> Self {
         Self {
             words,
-            rng: rand::rng(),
+            rng: StdRng::seed_from_u64(seed),
         }
     }
 

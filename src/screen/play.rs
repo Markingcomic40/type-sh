@@ -54,10 +54,12 @@ impl Item {
 /// The bar's items, grouped by what they configure.
 fn bar_groups(s: &Settings) -> Vec<Vec<Item>> {
     let mut groups = vec![Mode::ALL.map(Item::Mode).to_vec()];
+
     if s.mode != Mode::Zen {
         let amounts = s.mode.presets().iter().map(|&n| Item::Amount(n));
         groups.push(amounts.chain([Item::CustomAmount]).collect());
     }
+    
     groups.push(
         s.wordlists()
             .into_iter()
@@ -87,7 +89,7 @@ pub struct Play {
 impl Play {
     pub fn new(settings: &Settings) -> Result<Self> {
         Ok(Self {
-            test: TypingTest::new(settings.test_config())?,
+            test: TypingTest::new(settings.test_config(rand::random()))?,
             bar: None,
             error: None,
         })
@@ -195,7 +197,7 @@ impl Play {
     }
 
     fn restart(&mut self, settings: &Settings) {
-        match TypingTest::new(settings.test_config()) {
+        match TypingTest::new(settings.test_config(rand::random())) {
             Ok(test) => self.test = test,
             Err(e) => self.error = Some(e.to_string()),
         }

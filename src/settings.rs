@@ -128,7 +128,7 @@ impl Settings {
         self
     }
 
-    pub fn test_config(&self) -> TestConfig {
+    pub fn test_config(&self, seed: u64) -> TestConfig {
         TestConfig {
             limit: match self.mode {
                 Mode::Time => Limit::Time(self.time),
@@ -137,6 +137,7 @@ impl Settings {
             },
             wordlist: self.wordlist.clone(),
             freedom: self.freedom,
+            seed,
         }
     }
 

@@ -76,7 +76,7 @@ pub struct TypingTest {
 
 impl TypingTest {
     pub fn new(config: TestConfig) -> Result<Self> {
-        let source = WordList::new(&config.wordlist)?;
+        let source = WordList::new(&config.wordlist, config.seed)?;
         Ok(Self::with_source(config, source))
     }
 
@@ -276,9 +276,10 @@ mod tests {
             limit,
             wordlist: String::new(),
             freedom: true,
+            seed: 0,
         };
         let words: Vec<String> = words.iter().map(|w| w.to_string()).collect();
-        let mut test = TypingTest::with_source(config, WordList::from_words(words.clone()));
+        let mut test = TypingTest::with_source(config, WordList::from_words(words.clone(), 0));
         test.words = words.into_iter().map(Word::new).collect();
         test
     }
@@ -382,5 +383,25 @@ mod tests {
                 Glyph::Extra('z')
             ]
         );
+    }
+
+    #[test]
+    fn the_same_seed_gives_the_same_words() {
+        let targets = |seed| {
+            let config = TestConfig {
+                limit: Limit::Words(50),
+                wordlist: "english".into(),
+                freedom: true,
+                seed,
+            };
+            let test = TypingTest::new(config).unwrap();
+            test.words()
+                .iter()
+                .map(|w| w.target.clone())
+                .collect::<Vec<_>>()
+        };
+
+        assert_eq!(targets(1), targets(1));
+        assert_ne!(targets(1), targets(2));
     }
 }

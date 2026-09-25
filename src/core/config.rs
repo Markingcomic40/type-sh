@@ -11,4 +11,5 @@ pub struct TestConfig {
     pub limit: Limit,
     pub wordlist: String,
     pub freedom: bool,
+    pub seed: u64,
 }
