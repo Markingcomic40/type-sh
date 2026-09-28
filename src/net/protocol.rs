@@ -3,6 +3,8 @@ use serde::{Deserialize, Serialize};
 use crate::core::config::Rules;
 use crate::core::stats::Report;
 
+pub type Id = u32;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PlayerColor {
     Cyan,
@@ -28,7 +30,7 @@ impl PlayerColor {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Player {
-    pub slot: u8,
+    pub id: Id,
     pub name: String,
     pub color: PlayerColor,
     pub ready: bool,
@@ -47,7 +49,7 @@ pub enum ToServer {
         ready: bool,
     },
 
-    /// Where the caret is; conn tells whomai no need slot
+    /// Where the caret is; conn tells whomai no need id
     Progress {
         word: usize,
         char: usize,
@@ -63,7 +65,7 @@ pub enum ToServer {
 pub enum ToClient {
     /// Which row client is
     Welcome {
-        slot: u8,
+        id: Id,
     },
 
     /// Eg version mismatch
@@ -87,19 +89,19 @@ pub enum ToClient {
 
     /// Clients progress tagged with whoami
     Moved {
-        slot: u8,
+        id: Id,
         word: usize,
         char: usize,
         wpm: f64,
     },
 
     Finished {
-        slot: u8,
+        id: Id,
         report: Report,
     },
-    
-	Left {
-        slot: u8,
+
+    Left {
+        id: Id,
     },
 }
 
@@ -169,10 +171,10 @@ mod tests {
 
     #[test]
     fn messages_to_clients_survive_the_wire() {
-        round_trip(ToClient::Welcome { slot: 2 });
+        round_trip(ToClient::Welcome { id: 2 });
         round_trip(ToClient::Room {
             players: vec![Player {
-                slot: 0,
+                id: 0,
                 name: "sammy".into(),
                 color: PlayerColor::Cyan,
                 ready: true,
@@ -186,13 +188,13 @@ mod tests {
             countdown_ms: 3000,
         });
         round_trip(ToClient::Moved {
-            slot: 1,
+            id: 1,
             word: 4,
             char: 0,
             wpm: 60.0,
         });
         round_trip(ToClient::Finished {
-            slot: 1,
+            id: 1,
             report: report(),
         });
     }
