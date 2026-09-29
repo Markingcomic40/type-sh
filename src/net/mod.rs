@@ -1,5 +1,6 @@
 pub mod client;
 pub mod protocol;
+pub mod room;
 pub mod server;
 
 use std::io::{self, BufRead, BufReader, Write};

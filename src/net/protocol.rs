@@ -36,6 +36,16 @@ pub struct Player {
     pub ready: bool,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub enum Phase {
+    Lobby,
+    Racing,
+    /// Everyone goes back to the lobby once this runs out
+    Results {
+        back_in_ms: u64,
+    },
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum ToServer {
     /// DONT CHANGE THIS SHAPE
@@ -59,6 +69,9 @@ pub enum ToServer {
     Finished {
         report: Report,
     },
+
+    /// Everyone back to the lobby, from a race or its results
+    Cancel,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -77,6 +90,7 @@ pub enum ToClient {
     Room {
         players: Vec<Player>,
         rules: Rules,
+        phase: Phase,
     },
 
     Start {
@@ -161,6 +175,7 @@ mod tests {
             name: "bobby".into(),
         });
         round_trip(ToServer::Ready { ready: true });
+        round_trip(ToServer::Cancel);
         round_trip(ToServer::Progress {
             word: 12,
             char: 3,
@@ -180,6 +195,7 @@ mod tests {
                 ready: true,
             }],
             rules: rules(),
+            phase: Phase::Results { back_in_ms: 12_000 },
         });
         round_trip(ToClient::Start {
             rules: rules(),
