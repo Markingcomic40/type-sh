@@ -2,6 +2,7 @@ pub mod client;
 pub mod protocol;
 pub mod room;
 pub mod server;
+pub mod session;
 
 use std::io::{self, BufRead, BufReader, Write};
 use std::net::TcpStream;
