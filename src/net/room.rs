@@ -91,7 +91,7 @@ impl Room {
         } else {
             None
         };
-        
+
         if let Some(reason) = refusal {
             return vec![Out::To(id, ToClient::Rejected { reason }), Out::Kick(id)];
         }
@@ -100,7 +100,7 @@ impl Room {
             .into_iter()
             .find(|c| self.players.iter().all(|p| p.color != *c))
             .expect("fewer players than colours type sh");
-        
+
         self.players.push(Player {
             id,
             name,
@@ -127,25 +127,20 @@ impl Room {
                     vec![self.snapshot(now)]
                 }
             }
-            ToServer::Progress { word, char, wpm } if racing => {
-                vec![Out::All(ToClient::Moved {
-                    id,
-                    word,
-                    char,
-                    wpm,
-                })]
+            ToServer::Typed { keys, wpm } if racing => {
+                vec![Out::All(ToClient::Typed { id, keys, wpm })]
             }
             ToServer::Finished { report } => {
                 let Stage::Racing { finished } = &mut self.stage else {
                     return Vec::new();
                 };
-                
+
                 if !finished.insert(id) {
                     return Vec::new();
                 }
 
                 let mut out = vec![Out::All(ToClient::Finished { id, report })];
-                
+
                 if self.everyone_finished() {
                     out.push(self.to_results(now));
                 }
@@ -164,7 +159,7 @@ impl Room {
         self.players.retain(|p| p.id != id);
 
         let mut out = vec![Out::All(ToClient::Left { id })];
-        
+
         // The last one still racing leaving means everyone left is done
         if matches!(self.stage, Stage::Racing { .. }) && self.everyone_finished() {
             out.push(self.to_results(now));
@@ -177,7 +172,7 @@ impl Room {
 
     fn start(&mut self, now: Instant) -> Vec<Out> {
         self.unready();
-        
+
         self.stage = Stage::Racing {
             finished: HashSet::new(),
         };
@@ -204,7 +199,7 @@ impl Room {
     fn back_to_lobby(&mut self, now: Instant) -> Vec<Out> {
         self.unready();
         self.stage = Stage::Lobby;
-        
+
         vec![self.snapshot(now)]
     }
 
@@ -247,6 +242,7 @@ mod tests {
     use super::*;
     use crate::core::config::Limit;
     use crate::core::stats::{CharCounts, Report};
+    use crate::net::protocol::Keypress;
 
     fn rules(words: u64) -> Rules {
         Rules {
@@ -380,22 +376,21 @@ mod tests {
     }
 
     #[test]
-    fn progress_is_passed_on_with_who_sent_it() {
+    fn typing_is_passed_on_with_who_sent_it() {
         let now = Instant::now();
         let mut room = racing(now);
-        let progress = ToServer::Progress {
-            word: 3,
-            char: 1,
+        let keys = vec![Keypress::Char('a'), Keypress::Backspace];
+        let typed = ToServer::Typed {
+            keys: keys.clone(),
             wpm: 70.0,
         };
 
-        let out = say(&mut room, 1, progress, now);
+        let out = say(&mut room, 1, typed, now);
         assert_eq!(
             out,
-            [Out::All(ToClient::Moved {
+            [Out::All(ToClient::Typed {
                 id: 1,
-                word: 3,
-                char: 1,
+                keys,
                 wpm: 70.0
             })]
         );
@@ -408,10 +403,12 @@ mod tests {
 
         assert!(finish(&mut room, 0, now).len() == 1);
         let out = finish(&mut room, 1, now);
-        assert!(matches!(
-            last_room(&out).1,
-            Phase::Results { back_in_ms: 30_000 }
-        ));
+        assert_eq!(
+            *last_room(&out).1,
+            Phase::Results {
+                back_in_ms: RESULTS_TIMEOUT.as_millis() as u64
+            }
+        );
 
         ready(&mut room, 0, now);
         assert!(started(&ready(&mut room, 1, now)));
@@ -424,8 +421,9 @@ mod tests {
         finish(&mut room, 0, now);
         finish(&mut room, 1, now);
 
-        assert!(room.tick(now + Duration::from_secs(29)).is_empty());
-        let out = room.tick(now + Duration::from_secs(31));
+        let second = Duration::from_secs(1);
+        assert!(room.tick(now + RESULTS_TIMEOUT - second).is_empty());
+        let out = room.tick(now + RESULTS_TIMEOUT + second);
         assert_eq!(*last_room(&out).1, Phase::Lobby);
     }
 

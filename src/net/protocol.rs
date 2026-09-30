@@ -36,6 +36,14 @@ pub struct Player {
     pub ready: bool,
 }
 
+/// For spectators to see waht the player sees
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub enum Keypress {
+    /// A space moves on to the next word
+    Char(char),
+    Backspace,
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Phase {
     Lobby,
@@ -59,10 +67,9 @@ pub enum ToServer {
         ready: bool,
     },
 
-    /// Where the caret is; conn tells whomai no need id
-    Progress {
-        word: usize,
-        char: usize,
+    /// Keys pressed since the last one; conn tells whomai no need id
+    Typed {
+        keys: Vec<Keypress>,
         wpm: f64,
     },
 
@@ -101,11 +108,10 @@ pub enum ToClient {
         countdown_ms: u64,
     },
 
-    /// Clients progress tagged with whoami
-    Moved {
+    /// Someone's keys tagged with whoami
+    Typed {
         id: Id,
-        word: usize,
-        char: usize,
+        keys: Vec<Keypress>,
         wpm: f64,
     },
 
@@ -176,9 +182,12 @@ mod tests {
         });
         round_trip(ToServer::Ready { ready: true });
         round_trip(ToServer::Cancel);
-        round_trip(ToServer::Progress {
-            word: 12,
-            char: 3,
+        round_trip(ToServer::Typed {
+            keys: vec![
+                Keypress::Char('h'),
+                Keypress::Backspace,
+                Keypress::Char(' '),
+            ],
             wpm: 71.5,
         });
         round_trip(ToServer::Finished { report: report() });
@@ -203,10 +212,9 @@ mod tests {
             seed: u64::MAX,
             countdown_ms: 3000,
         });
-        round_trip(ToClient::Moved {
+        round_trip(ToClient::Typed {
             id: 1,
-            word: 4,
-            char: 0,
+            keys: vec![Keypress::Char('"'), Keypress::Char('\\')],
             wpm: 60.0,
         });
         round_trip(ToClient::Finished {
