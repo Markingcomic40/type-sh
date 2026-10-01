@@ -23,6 +23,13 @@ impl TextInput {
         }
     }
 
+    pub fn with_value(value: &str) -> Self {
+        Self {
+            value: value.to_owned(),
+            ..Self::new()
+        }
+    }
+
     pub fn digits_only(self) -> Self {
         Self {
             digits_only: true,

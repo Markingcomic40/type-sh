@@ -4,14 +4,20 @@
 //! - play goes to results when the test ends, or home on esc
 //! - results goes to play again on tab, or home on esc
 //! - settings goes home on esc
+//! - multiplayer hosts or joins a room, which lands in the lobby
+//! - the lobby follows the room: its phase says what to show
 //!
 //! Each screen handles its own keys and draws itself; switching screens is
 //! just returning the next one.
 
 pub mod home;
+pub mod lobby;
+pub mod multiplayer;
 pub mod play;
+pub mod race;
 pub mod results;
 pub mod settings;
+pub mod words;
 
 use crossterm::event::KeyEvent;
 
@@ -20,6 +26,8 @@ use crate::ui::frame::{spans_width, Frame, Span, Style};
 use crate::ui::theme::Theme;
 
 use home::Home;
+use lobby::Lobby;
+use multiplayer::MultiplayerMenu;
 use play::Play;
 use results::Results;
 use settings::SettingsMenu;
@@ -33,6 +41,8 @@ pub enum Screen {
     Play(Box<Play>),
     Settings(SettingsMenu),
     Results(Box<Results>),
+    Multiplayer(MultiplayerMenu),
+    Lobby(Box<Lobby>),
 }
 
 /// What a screen wants to happen after handling input
@@ -49,6 +59,8 @@ impl Screen {
             Screen::Play(play) => play.handle_key(key, settings),
             Screen::Settings(menu) => menu.handle_key(key, settings),
             Screen::Results(results) => results.handle_key(key, settings),
+            Screen::Multiplayer(menu) => menu.handle_key(key, settings),
+            Screen::Lobby(lobby) => lobby.handle_key(key),
         }
     }
 
@@ -56,6 +68,7 @@ impl Screen {
     pub fn tick(&mut self) -> Next {
         match self {
             Screen::Play(play) => play.tick(),
+            Screen::Lobby(lobby) => lobby.tick(),
             _ => Next::Stay,
         }
     }
@@ -72,6 +85,8 @@ impl Screen {
             Screen::Play(play) => play.draw(f, theme, settings),
             Screen::Settings(menu) => menu.draw(f, theme, settings),
             Screen::Results(results) => results.draw(f, theme),
+            Screen::Multiplayer(menu) => menu.draw(f, theme, settings),
+            Screen::Lobby(lobby) => lobby.draw(f, theme),
         }
     }
 }

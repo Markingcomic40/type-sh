@@ -3,22 +3,16 @@ use std::borrow::Cow;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 use crate::core::config::Limit;
-use crate::core::typing_test::{Glyph, TypingTest, Word};
+use crate::core::typing_test::TypingTest;
 use crate::error::Result;
 use crate::screen::home::Home;
 use crate::screen::results::Results;
+use crate::screen::words;
 use crate::screen::{self, Next, Screen};
 use crate::settings::{display_name, Mode, Settings, MAX_AMOUNT};
 use crate::ui::frame::{spans_width, Frame, Span, Style};
 use crate::ui::input::{Input, TextInput};
-use crate::ui::rect::Rect;
 use crate::ui::theme::Theme;
-
-/// Lines u see ont he screen of words at most
-const LINES: u16 = 3;
-
-/// Widest the words get
-const MAX_TEXT_WIDTH: u16 = 80;
 
 #[derive(Clone, PartialEq, Eq)]
 enum Item {
@@ -59,7 +53,7 @@ fn bar_groups(s: &Settings) -> Vec<Vec<Item>> {
         let amounts = s.mode.presets().iter().map(|&n| Item::Amount(n));
         groups.push(amounts.chain([Item::CustomAmount]).collect());
     }
-    
+
     groups.push(
         s.wordlists()
             .into_iter()
@@ -75,7 +69,7 @@ fn bar_items(s: &Settings) -> Vec<Item> {
 
 struct Bar {
     cursor: usize,
-    /// Set while typing in custom 
+    /// Set while typing in custom
     editing: Option<TextInput>,
 }
 
@@ -205,16 +199,18 @@ impl Play {
 
     pub fn draw(&self, f: &mut Frame, theme: &Theme, settings: &Settings) {
         let area = f.area();
-        let width = area.width.saturating_sub(8).min(MAX_TEXT_WIDTH);
-        let words = Rect::new(
-            area.x + (area.width - width) / 2,
-            (area.height / 2).saturating_sub(LINES),
-            width,
-            LINES,
-        );
+        let words = words::area(area);
 
         self.draw_counter(f, theme, words.x, words.y - 2);
-        self.draw_words(f, theme, words);
+        words::draw(
+            f,
+            theme,
+            words,
+            self.test.words(),
+            self.test.current(),
+            self.bar.is_none(),
+            &[],
+        );
 
         if let Some(error) = &self.error {
             let span = Span::new(error.as_str(), Style::fg(theme.error));
@@ -243,41 +239,13 @@ impl Play {
     /// Time left, words done, or words typed etc.
     fn draw_counter(&self, f: &mut Frame, theme: &Theme, x: u16, y: u16) {
         let test = &self.test;
-        let text = match test.config().limit {
-            Limit::Time(secs) => secs.saturating_sub(test.elapsed().as_secs()).to_string(),
-            Limit::Words(n) => format!("{}/{n}", test.current()),
-            Limit::None => test.current().to_string(),
-        };
+        let text = words::counter(test);
         let color = if test.has_started() {
             theme.accent
         } else {
             theme.dim
         };
         f.print(x, y, &text, Style::fg(color));
-    }
-
-    fn draw_words(&self, f: &mut Frame, theme: &Theme, area: Rect) {
-        let words = self.test.words();
-        let current = self.test.current().min(words.len() - 1);
-        let layout = wrap(words.iter().map(Word::width), usize::from(area.width));
-        let first = layout[current].0.saturating_sub(1);
-
-        for (i, (word, &(line, col))) in words.iter().zip(&layout).enumerate() {
-            if line < first {
-                continue;
-            }
-            if line >= first + usize::from(LINES) {
-                break;
-            }
-
-            let x = area.x + col as u16;
-            let y = area.y + (line - first) as u16;
-            draw_word(f, theme, x, y, word, i < current);
-
-            if i == current && self.bar.is_none() {
-                f.set_cursor(x + word.typed.chars().count() as u16, y);
-            }
-        }
     }
 
     fn draw_bar(&self, f: &mut Frame, theme: &Theme, settings: &Settings, y: u16) {
@@ -323,48 +291,9 @@ impl Play {
     }
 }
 
-fn draw_word(f: &mut Frame, theme: &Theme, x: u16, y: u16, word: &Word, finished: bool) {
-    let underline = finished && !word.is_correct();
-
-    for (i, glyph) in word.glyphs().enumerate() {
-        let (ch, color) = match glyph {
-            Glyph::Correct(c) => (c, theme.correct),
-            Glyph::Incorrect(c) => (c, theme.error),
-            Glyph::Extra(c) => (c, theme.error_extra),
-            Glyph::Untyped(c) => (c, theme.dim),
-        };
-        f.put(x + i as u16, y, ch, Style::fg(color).underline(underline));
-    }
-}
-
-/// Lays words out left to right with a space between, wrapping at width yield for each word line n column
-fn wrap(widths: impl Iterator<Item = usize>, width: usize) -> Vec<(usize, usize)> {
-    let (mut line, mut col) = (0, 0);
-
-    widths
-        .map(|w| {
-            // A word too long for any line still gets one to itself.
-            if col > 0 && col + w > width {
-                line += 1;
-                col = 0;
-            }
-            let pos = (line, col);
-            col += w + 1;
-            pos
-        })
-        .collect()
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn wrap_breaks_before_words_that_would_overflow() {
-        let layout = wrap([3, 3, 3, 10, 1].into_iter(), 8);
-
-        assert_eq!(layout, [(0, 0), (0, 4), (1, 0), (2, 0), (3, 0)]);
-    }
 
     #[test]
     fn bar_hides_amounts_in_zen() {

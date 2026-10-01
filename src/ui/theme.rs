@@ -2,6 +2,7 @@ use crossterm::style::Color;
 use serde::Deserialize;
 
 use crate::error::{AppError, Result};
+use crate::net::protocol::PlayerColor;
 
 pub const BUILTIN_THEMES: &[&str] = &["gruvbox", "ayu-mirage"];
 
@@ -70,6 +71,18 @@ impl Default for Theme {
 }
 
 impl Theme {
+    pub fn player(&self, color: PlayerColor) -> Color {
+        rgb(match color {
+            PlayerColor::Cyan => [86, 182, 194],
+            PlayerColor::Green => [152, 195, 121],
+            PlayerColor::Purple => [198, 120, 221],
+            PlayerColor::Blue => [97, 150, 239],
+            PlayerColor::Pink => [235, 120, 170],
+            PlayerColor::Yellow => [229, 192, 123],
+            PlayerColor::Orange => [214, 145, 90],
+        })
+    }
+
     /// Loads a builtin theme by name, or else a theme file by path.
     pub fn load(name: &str) -> Result<Self> {
         let err = |source: Box<dyn std::error::Error + Send + Sync>| AppError::Theme {

@@ -10,6 +10,8 @@ use crate::ui::theme::{Theme, BUILTIN_THEMES};
 
 pub const MAX_AMOUNT: u64 = 4269;
 
+const MAX_NAME: usize = 16;
+
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Mode {
@@ -53,6 +55,8 @@ pub struct Settings {
     pub custom_theme: Option<String>,
     #[serde(alias = "freedom_mode")]
     pub freedom: bool,
+    /// What others see in multiplayer
+    pub name: String,
 }
 
 fn or_default<'de, D, T>(deserializer: D) -> std::result::Result<T, D::Error>
@@ -75,6 +79,11 @@ impl Default for Settings {
             theme: BUILTIN_THEMES[0].to_owned(),
             custom_theme: None,
             freedom: true,
+            name: std::env::var("USER")
+                .or_else(|_| std::env::var("USERNAME"))
+                .ok()
+                .and_then(|name| clean_name(&name))
+                .unwrap_or_else(|| "player".to_owned()),
         }
     }
 }
@@ -113,6 +122,7 @@ impl Settings {
         if self.wordlist == "english_200" {
             self.wordlist.clone_from(&defaults.wordlist);
         }
+        self.name = clean_name(&self.name).unwrap_or(defaults.name);
         if !(1..=MAX_AMOUNT).contains(&self.time) {
             self.time = defaults.time;
         }
@@ -189,6 +199,12 @@ impl Settings {
 
 fn with_custom<'a>(builtins: &[&'a str], custom: &'a Option<String>) -> Vec<&'a str> {
     builtins.iter().copied().chain(custom.as_deref()).collect()
+}
+
+/// Trimmed and cut to length, or `None` if nothing's left
+pub fn clean_name(name: &str) -> Option<String> {
+    let name: String = name.trim().chars().take(MAX_NAME).collect();
+    (!name.is_empty()).then_some(name)
 }
 
 pub fn display_name(value: &str) -> &str {

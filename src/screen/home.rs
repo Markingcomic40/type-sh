@@ -1,5 +1,6 @@
 use crossterm::event::{KeyCode, KeyEvent};
 
+use crate::screen::multiplayer::MultiplayerMenu;
 use crate::screen::settings::SettingsMenu;
 use crate::screen::{self, Next, Screen};
 use crate::settings::Settings;
@@ -17,16 +18,18 @@ const TAGLINE: &str = "type like a true 10x engineer";
 #[derive(Clone, Copy)]
 enum Item {
     Play,
+    Multiplayer,
     Settings,
     Quit,
 }
 
-const ITEMS: [Item; 3] = [Item::Play, Item::Settings, Item::Quit];
+const ITEMS: [Item; 4] = [Item::Play, Item::Multiplayer, Item::Settings, Item::Quit];
 
 impl Item {
     fn label(self) -> &'static str {
         match self {
             Item::Play => "play",
+            Item::Multiplayer => "multiplayer",
             Item::Settings => "settings",
             Item::Quit => "quit",
         }
@@ -60,6 +63,7 @@ impl Home {
             KeyCode::Enter | KeyCode::Char(' ') => {
                 return match ITEMS[self.selected] {
                     Item::Play => Next::To(screen::play(settings)),
+                    Item::Multiplayer => Next::To(Screen::Multiplayer(MultiplayerMenu::default())),
                     Item::Settings => Next::To(Screen::Settings(SettingsMenu::default())),
                     Item::Quit => Next::Quit,
                 };
@@ -72,7 +76,7 @@ impl Home {
     }
 
     pub fn draw(&self, f: &mut Frame, theme: &Theme) {
-        const HEIGHT: u16 = 2 + 1 + 1 + 3 + 5 + 1 + 1;
+        const HEIGHT: u16 = 2 + 1 + 1 + 3 + 2 * ITEMS.len() as u16 - 1 + 1 + 1;
         let area = f.area();
         let block = area.centered(area.width, HEIGHT);
 

@@ -80,6 +80,12 @@ impl TypingTest {
         Ok(Self::with_source(config, source))
     }
 
+    /// A test drawing from given words instead of a named list for races
+    pub fn from_words(config: TestConfig, words: Vec<String>) -> Self {
+        let seed = config.seed;
+        Self::with_source(config, WordList::from_words(words, seed))
+    }
+
     fn with_source(config: TestConfig, mut source: WordList) -> Self {
         let count = match config.limit {
             Limit::Words(n) => (n as usize).max(1),
