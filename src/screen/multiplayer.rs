@@ -5,7 +5,7 @@ use crate::net::session::{self, Session};
 use crate::screen::home::Home;
 use crate::screen::lobby::Lobby;
 use crate::screen::{self, Next, Screen};
-use crate::settings::{clean_name, Settings};
+use crate::settings::{clean_name, Mode, Settings};
 use crate::ui::frame::{Frame, Style};
 use crate::ui::input::{Input, TextInput};
 use crate::ui::theme::Theme;
@@ -107,7 +107,11 @@ impl MultiplayerMenu {
         Next::Stay
     }
 
-    fn host(&mut self, settings: &Settings) -> Next {
+    fn host(&mut self, settings: &mut Settings) -> Next {
+        // The room's bar has no zen to show as picked
+        if settings.mode == Mode::Zen {
+            settings.mode = Mode::Words;
+        }
         match Session::host(race_rules(settings), &settings.name) {
             Ok(session) => {
                 let address =
@@ -181,7 +185,7 @@ fn lobby(session: Session, address: String) -> Next {
 }
 
 /// Zen never ends, so a race of it would have no winner
-fn race_rules(settings: &Settings) -> Rules {
+pub fn race_rules(settings: &Settings) -> Rules {
     let mut rules = settings.rules();
     if rules.limit == Limit::None {
         rules.limit = Limit::Words(settings.words);

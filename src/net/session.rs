@@ -33,25 +33,25 @@ impl Session {
             hosting: Some(Hosting {
                 server,
                 room: Room::new(rules, pool),
-            }),  
+            }),
             client,
         };
 
         session.greet(name);
-        
+
         Ok(session)
     }
 
     /// address is an ip or hostname, with the port optional
     pub fn join(address: &str, name: &str) -> Result<Self> {
         let address = address.trim();
-        
+
         let full = if address.contains(':') {
             address.to_owned()
         } else {
             format!("{address}:{PORT}")
         };
-        
+
         let addr = full.to_socket_addrs()?.next().ok_or_else(|| {
             io::Error::new(
                 io::ErrorKind::NotFound,
@@ -63,9 +63,9 @@ impl Session {
             hosting: None,
             client: Client::connect(addr)?,
         };
-        
+
         session.greet(name);
-        
+
         Ok(session)
     }
 
@@ -88,23 +88,39 @@ impl Session {
     pub fn poll(&mut self, now: Instant) -> Vec<client::Event> {
         if let Some(Hosting { server, room }) = &mut self.hosting {
             let mut out = Vec::new();
-            
+
             for event in server.poll() {
                 out.extend(room.handle(event, now));
             }
-            
+
             out.extend(room.tick(now));
 
-            for o in out {
-                match o {
-                    Out::To(id, msg) => server.send(id, &msg),
-                    Out::All(msg) => server.broadcast(&msg),
-                    Out::Kick(id) => server.kick(id),
-                }
-            }
+            apply(server, out);
         }
-        
+
         self.client.poll()
+    }
+
+    /// Hosting only. words load first so rules naming a list that dont load dont break shi
+    pub fn set_rules(&mut self, rules: Rules, now: Instant) -> Result<()> {
+        let Some(Hosting { server, room }) = &mut self.hosting else {
+            return Ok(());
+        };
+
+        let pool = word_pool::load(&rules.wordlist)?;
+        apply(server, room.set_rules(rules, pool, now));
+
+        Ok(())
+    }
+}
+
+fn apply(server: &Server, out: Vec<Out>) {
+    for o in out {
+        match o {
+            Out::To(id, msg) => server.send(id, &msg),
+            Out::All(msg) => server.broadcast(&msg),
+            Out::Kick(id) => server.kick(id),
+        }
     }
 }
 

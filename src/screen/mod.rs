@@ -7,9 +7,9 @@
 //! - multiplayer hosts or joins a room, which lands in the lobby
 //! - the lobby follows the room: its phase says what to show
 //!
-//! Each screen handles its own keys and draws itself; switching screens is
-//! just returning the next one.
+//! Each screen handles its own keys and draws itself; switching screens is just returning the next one
 
+pub mod bar;
 pub mod home;
 pub mod lobby;
 pub mod multiplayer;
@@ -60,7 +60,7 @@ impl Screen {
             Screen::Settings(menu) => menu.handle_key(key, settings),
             Screen::Results(results) => results.handle_key(key, settings),
             Screen::Multiplayer(menu) => menu.handle_key(key, settings),
-            Screen::Lobby(lobby) => lobby.handle_key(key),
+            Screen::Lobby(lobby) => lobby.handle_key(key, settings),
         }
     }
 
@@ -86,7 +86,7 @@ impl Screen {
             Screen::Settings(menu) => menu.draw(f, theme, settings),
             Screen::Results(results) => results.draw(f, theme),
             Screen::Multiplayer(menu) => menu.draw(f, theme, settings),
-            Screen::Lobby(lobby) => lobby.draw(f, theme),
+            Screen::Lobby(lobby) => lobby.draw(f, theme, settings),
         }
     }
 }

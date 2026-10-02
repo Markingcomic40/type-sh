@@ -6,10 +6,11 @@ use crate::core::config::{Limit, Rules};
 use crate::net::client::Event;
 use crate::net::protocol::{Id, Phase, Player, ToClient, ToServer};
 use crate::net::session::Session;
-use crate::screen::multiplayer::MultiplayerMenu;
+use crate::screen::bar::{self, Bar, Kind, Outcome};
+use crate::screen::multiplayer::{race_rules, MultiplayerMenu};
 use crate::screen::race::Race;
 use crate::screen::{self, Next, Screen};
-use crate::settings::display_name;
+use crate::settings::{display_name, Settings};
 use crate::ui::frame::{Frame, Style};
 use crate::ui::theme::Theme;
 
@@ -27,6 +28,9 @@ pub struct Lobby {
     phase: Phase,
     /// Lives from `Start` until everyone's back in the lobby
     race: Option<Race>,
+    /// The host's rules bar while it has focus
+    bar: Option<Bar>,
+    error: Option<String>,
     /// When results run out and everyone's sent back
     results_until: Option<Instant>,
     /// Why the host turned us away, shown once it hangs up
@@ -43,6 +47,8 @@ impl Lobby {
             rules: None,
             phase: Phase::Lobby,
             race: None,
+            bar: None,
+            error: None,
             results_until: None,
             rejected: None,
         }
@@ -88,6 +94,8 @@ impl Lobby {
                 };
                 if phase == Phase::Lobby {
                     self.race = None;
+                } else {
+                    self.bar = None;
                 }
                 self.players = players;
                 self.rules = Some(rules);
@@ -121,11 +129,33 @@ impl Lobby {
         }
     }
 
-    pub fn handle_key(&mut self, key: KeyEvent) -> Next {
+    pub fn handle_key(&mut self, key: KeyEvent, settings: &mut Settings) -> Next {
+        self.error = None;
+        if let Some(bar) = &mut self.bar {
+            let before = settings.clone();
+            match bar.handle_key(key, settings) {
+                Outcome::Stay => {}
+                Outcome::Changed => {
+                    // Rules are the host's settings, so a change the room
+                    // couldn't take is undone rather than left out of step
+                    if let Err(e) = self.session.set_rules(race_rules(settings), Instant::now()) {
+                        *settings = before;
+                        self.error = Some(e.to_string());
+                    }
+                }
+                Outcome::Close | Outcome::Pass => self.bar = None,
+                Outcome::Error(e) => self.error = Some(e),
+            }
+            return Next::Stay;
+        }
+
         let esc = key.code == KeyCode::Esc;
         match self.phase {
             Phase::Lobby if esc => {
                 return Next::To(Screen::Multiplayer(MultiplayerMenu::default()));
+            }
+            Phase::Lobby if key.code == KeyCode::Up && self.session.is_host() => {
+                self.bar = Some(Bar::open(settings, Kind::Race));
             }
             Phase::Racing | Phase::Results { .. } if esc => self.session.send(&ToServer::Cancel),
             Phase::Racing => {
@@ -154,7 +184,7 @@ impl Lobby {
         self.players.iter().find(|p| Some(p.id) == self.me)
     }
 
-    pub fn draw(&self, f: &mut Frame, theme: &Theme) {
+    pub fn draw(&self, f: &mut Frame, theme: &Theme, settings: &Settings) {
         match (&self.phase, &self.race) {
             (Phase::Racing, Some(race)) if race.has_view(&self.players, self.me) => {
                 race.draw(f, theme, &self.players, self.me);
@@ -163,11 +193,11 @@ impl Lobby {
             (Phase::Racing | Phase::Results { .. }, Some(race)) => {
                 self.draw_results(f, theme, race);
             }
-            _ => self.draw_room(f, theme),
+            _ => self.draw_room(f, theme, settings),
         }
     }
 
-    fn draw_room(&self, f: &mut Frame, theme: &Theme) {
+    fn draw_room(&self, f: &mut Frame, theme: &Theme, settings: &Settings) {
         // title, gap, address, rules, gap, a row per player, gap, status
         let height = 2 + 2 + 1 + MAX_PLAYERS + 1 + 1;
         let block = f.area().centered(WIDTH, height);
@@ -208,7 +238,15 @@ impl Lobby {
             self.draw_player(f, theme, x, block.y + 5 + i as u16, player);
         }
 
-        f.print(x, block.bottom() - 1, &self.status(), label);
+        if self.session.is_host() && self.phase == Phase::Lobby {
+            let y = block.y.saturating_sub(2);
+            bar::draw(f, theme, settings, Kind::Race, self.bar.as_ref(), y);
+        }
+
+        match &self.error {
+            Some(error) => f.print(x, block.bottom() - 1, error, Style::fg(theme.error)),
+            None => f.print(x, block.bottom() - 1, &self.status(), label),
+        };
         screen::draw_hints(f, theme, &self.hints());
     }
 
@@ -322,7 +360,12 @@ impl Lobby {
         let ready = self.my_player().is_some_and(|p| p.ready);
         let toggle = ("any key", if ready { "unready" } else { "ready" });
         match self.phase {
-            Phase::Lobby => vec![toggle, ("esc", "leave")],
+            Phase::Lobby => match &self.bar {
+                Some(bar) if bar.is_editing() => vec![("enter", "confirm"), ("esc", "cancel")],
+                Some(_) => vec![("←→", "move"), ("enter", "select"), ("↓", "back")],
+                None if self.session.is_host() => vec![toggle, ("↑", "rules"), ("esc", "leave")],
+                None => vec![toggle, ("esc", "leave")],
+            },
             Phase::Racing if self.race.as_ref().is_some_and(Race::is_done) => {
                 vec![("↑↓", "watch"), ("esc", "back to lobby for everyone")]
             }

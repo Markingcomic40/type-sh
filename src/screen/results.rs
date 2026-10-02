@@ -46,7 +46,7 @@ impl Results {
             area.width.saturating_sub(6).min(MAX_WIDTH),
             chart_height + STATS_HEIGHT,
         );
-        
+
         // Leave room below for the hints
         let block = Rect {
             y: block.y.saturating_sub(1),
