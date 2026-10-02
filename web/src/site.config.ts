@@ -2,7 +2,7 @@ export const site = {
   name: 'TypeSH',
   tagline: 'Practice typing like a true 10x engineer,',
   taglineJoke: 'Or typing prompts like a true vibe coder..? type sh B)',
-  version: '0.3.0', // in sync with Cargo.toml as of writing this
+  version: __APP_VERSION__,
   repo: 'https://github.com/Markingcomic40/type-sh',
   releases: 'https://github.com/Markingcomic40/type-sh/releases/latest',
   install: 'cargo install type-sh',
